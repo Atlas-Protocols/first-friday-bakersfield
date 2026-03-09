@@ -1,0 +1,318 @@
+:root {
+    --bg-dark: #0f1115;
+    --bg-panel: rgba(25, 28, 35, 0.7);
+    --primary: #8b5cf6;
+    --primary-glow: rgba(139, 92, 246, 0.4);
+    --secondary: #ec4899;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Outfit', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    overflow: hidden;
+    /* Prevent body scrolling on mobile */
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Glassmorphism Header */
+.glass-header {
+    background: var(--bg-panel);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 1rem;
+    text-align: center;
+    position: relative;
+    z-index: 1000;
+}
+
+.glass-header h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.highlight {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.glass-header p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 0.2rem;
+}
+
+main {
+    flex: 1;
+    position: relative;
+}
+
+/* Views */
+.view-section {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.view-section.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Map specific */
+#map {
+    flex: 1;
+    width: 100%;
+    background: var(--bg-dark);
+}
+
+.map-overlay {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 90%;
+    max-width: 400px;
+}
+
+/* Custom map markers */
+.custom-marker {
+    background: var(--bg-panel);
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    color: white;
+    text-align: center;
+    line-height: 30px;
+    font-size: 14px;
+    box-shadow: 0 0 15px var(--primary-glow);
+    backdrop-filter: blur(4px);
+}
+
+/* Scavenger Hunt */
+#hunt-view {
+    padding: 2rem 1.5rem;
+    background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.1), transparent 50%),
+        radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.1), transparent 50%);
+    overflow-y: auto;
+}
+
+.hunt-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.stamp-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stamp-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.stamp-card:active {
+    transform: scale(0.96);
+}
+
+.stamp-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.3;
+    transition: opacity 0.3s, transform 0.3s;
+    display: inline-block;
+}
+
+.stamp-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* Collected State */
+.stamp-card.collected {
+    border-color: var(--primary);
+    box-shadow: 0 0 20px var(--primary-glow), inset 0 0 20px var(--primary-glow);
+}
+
+.stamp-card.collected .stamp-icon {
+    opacity: 1;
+    transform: scale(1.2) rotate(10deg);
+}
+
+.stamp-card.collected .stamp-name {
+    color: white;
+}
+
+/* Progress Bar */
+.progress-container {
+    margin-bottom: 3rem;
+}
+
+.progress-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 4px;
+    transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#progress-text {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* Buttons */
+.btn-primary,
+.btn-secondary {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: opacity 0.2s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    box-shadow: 0 4px 15px var(--primary-glow);
+}
+
+.btn-secondary {
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    color: white;
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+    opacity: 0.8;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.glass-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    transform: translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-overlay.show .glass-panel {
+    transform: translateY(0);
+}
+
+.modal-content h2 {
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.modal-content p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.qr-placeholder img {
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    border: 4px solid white;
+}
+
+.claim-code {
+    font-family: monospace !important;
+    font-size: 1.2rem !important;
+    color: white !important;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem;
+    border-radius: 8px;
+    letter-spacing: 2px;
+    margin-bottom: 2rem !important;
+}
+
+/* Map Dark Theme Overrides */
+.leaflet-layer,
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out,
+.leaflet-control-attribution {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}

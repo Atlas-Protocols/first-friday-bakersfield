@@ -4,7 +4,7 @@
 
 // 1. Map Initialization
 // Center on Downtown Bakersfield (focusing perfectly on the 18th-19th St route)
-const mapCenter = [35.3757, -119.0167]; // Midpoint between Encore Boutique and ACK
+const mapCenter = [35.3761, -119.0185]; // Dead center at 19th and Chester Ave
 const map = L.map('map', {
     zoomControl: false // Custom UI handles this
 }).setView(mapCenter, 16);
@@ -25,13 +25,17 @@ function createCustomIcon(emoji) {
     });
 }
 
-// Add Mock Vendors / Locations along 18th/19th St Route
+// Add Mock Vendors / Locations along the Red/Cyan Box route
 const locations = [
-    { name: "Arts Council of Kern (1020 18th St)", coords: [35.37535, -119.01325], icon: "🏛️" },
-    { name: "BAA @ Encore Boutique (1607 19th St - $1 SALE)", coords: [35.37615, -119.02022], icon: "👗" },
-    { name: "Bakersfield Vintage", coords: [35.37600, -119.01500], icon: "📻" }, // Approx along 19th route
-    { name: "Fox Theater (High Activity)", coords: [35.37700, -119.02200], icon: "🎭" },
-    { name: "Padre Hotel (Bar / Food)", coords: [35.37500, -119.02100], icon: "🍸" }
+    { name: "Arts Council of Kern (1020 18th St)", coords: [35.3753, -119.0132], icon: "🏛️" },
+    { name: "BAA (1607 19th St & Eye)", coords: [35.3761, -119.0202], icon: "🎨" },
+    { name: "Encore Boutique (South of BAA on Eye St)", coords: [35.3755, -119.0202], icon: "👗" },
+    { name: "Bakersfield Vintage (Next to Sandrini's)", coords: [35.3761, -119.0185], icon: "📻" },
+    { name: "Dagny's Coffee Co.", coords: [35.3771, -119.0202], icon: "☕" },
+    { name: "Sandrini's Public House", coords: [35.3761, -119.0180], icon: "🍻" },
+    { name: "Fox Theater", coords: [35.3771, -119.0221], icon: "🎭" },
+    { name: "Padre Hotel", coords: [35.3746, -119.0210], icon: "🍸" },
+    { name: "Food Trucks / Vendors", coords: [35.3761, -119.0195], icon: "🌭" }
 ];
 
 locations.forEach(loc => {
@@ -55,10 +59,10 @@ function switchView(viewId) {
 const totalStamps = 5;
 const stampData = [
     { id: 'stamp-1', name: 'Arts Council (ACK)', icon: '🏛️' },
-    { id: 'stamp-2', name: 'BAA @ Encore', icon: '👗' },
-    { id: 'stamp-3', name: 'Bakersfield Vintage', icon: '📻' },
-    { id: 'stamp-4', name: 'Padre Hotel/Drinks', icon: '🍸' },
-    { id: 'stamp-5', name: 'Fox Theater', icon: '🎭' }
+    { id: 'stamp-2', name: 'BAA (19th & Eye)', icon: '🎨' },
+    { id: 'stamp-3', name: 'Encore $1 Sale', icon: '👗' },
+    { id: 'stamp-4', name: 'Bako Vintage', icon: '📻' },
+    { id: 'stamp-5', name: 'Dagny\'s/Sandrini\'s', icon: '🍸' }
 ];
 
 let collection = {};

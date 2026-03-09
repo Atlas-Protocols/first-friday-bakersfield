@@ -3,10 +3,18 @@
  */
 
 // 1. Map Initialization
-// Center on Downtown Bakersfield (focusing perfectly on the 18th-19th St route)
-const mapCenter = [35.3761, -119.0185]; // Dead center at 19th and Chester Ave
+// 1. Map Initialization
+// Center on Downtown Bakersfield Arts District Route (From Fox to ACK)
+const mapCenter = [35.3760, -119.0180]; // Central focus point of the route
 const map = L.map('map', {
-    zoomControl: false // Custom UI handles this
+    zoomControl: false, // Custom UI handles this
+    minZoom: 15,
+    maxZoom: 18,
+    maxBounds: [
+        [35.3740, -119.0240], // South-West (Past Padre/H St)
+        [35.3785, -119.0110]  // North-East (Past ACK/O St)
+    ],
+    maxBoundsViscosity: 1.0 // Prevent panning outside the box
 }).setView(mapCenter, 16);
 
 // Use standard OpenStreetMap tiles, CSS handles the dark mode inversion
@@ -25,17 +33,16 @@ function createCustomIcon(emoji) {
     });
 }
 
-// Add Mock Vendors / Locations along the Red/Cyan Box route
+// Add ONLY the Exact In-Scope Vendors Based on the Red/Cyan Screenshot Map
 const locations = [
-    { name: "Arts Council of Kern (1020 18th St)", coords: [35.3753, -119.0132], icon: "🏛️" },
-    { name: "BAA (1607 19th St & Eye)", coords: [35.3761, -119.0202], icon: "🎨" },
-    { name: "Encore Boutique (South of BAA on Eye St)", coords: [35.3755, -119.0202], icon: "👗" },
-    { name: "Bakersfield Vintage (Next to Sandrini's)", coords: [35.3761, -119.0185], icon: "📻" },
-    { name: "Dagny's Coffee Co.", coords: [35.3771, -119.0202], icon: "☕" },
-    { name: "Sandrini's Public House", coords: [35.3761, -119.0180], icon: "🍻" },
-    { name: "Fox Theater", coords: [35.3771, -119.0221], icon: "🎭" },
-    { name: "Padre Hotel", coords: [35.3746, -119.0210], icon: "🍸" },
-    { name: "Food Trucks / Vendors", coords: [35.3761, -119.0195], icon: "🌭" }
+    { name: "Majestic Fox Theater (20th & H)", coords: [35.3777, -119.0223], icon: "🎭" },
+    { name: "Dagny's Coffee (20th & Eye)", coords: [35.3772, -119.0202], icon: "☕" },
+    { name: "Bakersfield Art Association (BAA - 19th & Eye)", coords: [35.3761, -119.0202], icon: "🎨" },
+    { name: "Bakersfield Vintage (Eye St near Sandrini's)", coords: [35.3766, -119.0199], icon: "📻" },
+    { name: "Sandrini's Public House (Eye St)", coords: [35.3764, -119.0199], icon: "🍻" },
+    { name: "Encore Boutique ($1 Sale - 18th & Eye)", coords: [35.3751, -119.0202], icon: "👗" },
+    { name: "The Padre Hotel (18th & H)", coords: [35.3746, -119.0215], icon: "🍸" },
+    { name: "Arts Council of Kern (ACK - 18th & N/O)", coords: [35.3753, -119.0132], icon: "🏛️" }
 ];
 
 locations.forEach(loc => {

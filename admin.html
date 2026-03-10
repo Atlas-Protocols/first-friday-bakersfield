@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f1115">
+    <title>First Friday · Admin Panel</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet (for venue coordinate picker map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <!-- QR code generation -->
+    <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.js"></script>
+
+    <style>
+        /* ─── Tokens ────────────────────────────────────────────────────── */
+        :root {
+            --c-bg:         #0f1115;
+            --c-surface:    rgba(25, 28, 35, 0.92);
+            --c-primary:    #8b5cf6;
+            --c-primary-gl: rgba(139, 92, 246, 0.35);
+            --c-accent:     #ec4899;
+            --c-green:      #4ade80;
+            --c-red:        #f87171;
+            --c-text:       #f1f5f9;
+            --c-text-dim:   #94a3b8;
+            --c-border:     rgba(255, 255, 255, 0.08);
+            --radius-sm:    8px;
+            --radius-md:    14px;
+            --radius-lg:    20px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            font-family: 'Outfit', system-ui, sans-serif;
+            background: var(--c-bg);
+            color: var(--c-text);
+            min-height: 100dvh;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+        }
+        .hidden { display: none !important; }
+        .gradient-text {
+            background: linear-gradient(135deg, var(--c-primary), var(--c-accent));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* ─── PIN Gate ──────────────────────────────────────────────────── */
+        #pin-gate {
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100dvh; padding: 1.5rem;
+        }
+        .pin-box {
+            background: var(--c-surface);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-lg);
+            padding: 2rem 1.5rem;
+            width: 100%; max-width: 320px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+        }
+        .pin-box h1 { font-size: 1.4rem; font-weight: 800; }
+        .pin-box .subtitle {
+            font-size: 0.72rem; color: var(--c-text-dim);
+            text-transform: uppercase; letter-spacing: 1.4px; margin-top: 2px;
+        }
+        .pin-dots {
+            display: flex; gap: 0.8rem; justify-content: center;
+            margin: 1.6rem 0 0.5rem;
+        }
+        .pin-dot {
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: transparent;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .pin-dot.filled { background: var(--c-primary); border-color: var(--c-primary); }
+        .pin-error { font-size: 0.78rem; color: var(--c-red); min-height: 1.2em; margin-bottom: 0.8rem; }
+        .pin-keypad {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 0.65rem; margin-top: 1rem;
+        }
+        .pin-key {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-sm);
+            color: var(--c-text);
+            font-family: inherit; font-size: 1.3rem; font-weight: 600;
+            padding: 0.9rem 0; cursor: pointer;
+            transition: background 0.12s, transform 0.1s;
+            -webkit-appearance: none;
+        }
+        .pin-key:active { background: rgba(139,92,246,0.25); transform: scale(0.93); }
+        .pin-key--blank { pointer-events: none; background: transparent; border-color: transparent; }
+        .pin-setup-note { font-size: 0.72rem; color: var(--c-text-dim); margin-top: 1.2rem; line-height: 1.5; }
+        .pin-setup-note strong { color: var(--c-primary); }
+
+        /* ─── Admin Header ──────────────────────────────────────────────── */
+        .admin-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.9rem 1.2rem;
+            background: var(--c-surface);
+            border-bottom: 1px solid var(--c-border);
+            backdrop-filter: blur(16px);
+            position: sticky; top: 0; z-index: 10;
+        }
+        .admin-header h1 { font-size: 1.15rem; font-weight: 800; }
+        .admin-header .subtitle { font-size: 0.68rem; color: var(--c-text-dim); text-transform: uppercase; letter-spacing: 1.2px; }
+
+        /* ─── Shared Buttons ────────────────────────────────────────────── */
+        .btn-icon {
+            background: rgba(255,255,255,0.06); border: 1px solid var(--c-border);
+            border-radius: var(--radius-sm); color: var(--c-text-dim);
+            font-family: inherit; font-size: 0.82rem; font-weight: 600;
+            padding: 0.5rem 0.85rem; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-icon:active { background: rgba(255,255,255,0.12); }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--c-primary), var(--c-accent));
+            border: none; border-radius: var(--radius-sm);
+            color: #fff; font-family: inherit; font-size: 0.88rem; font-weight: 700;
+            padding: 0.65rem 1.1rem; cursor: pointer;
+            transition: opacity 0.15s, transform 0.12s; box-shadow: 0 4px 14px var(--c-primary-gl);
+        }
+        .btn-primary:active { opacity: 0.82; transform: scale(0.97); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.06); border: 1px solid var(--c-border);
+            border-radius: var(--radius-sm); color: var(--c-text-dim);
+            font-family: inherit; font-size: 0.88rem; font-weight: 600;
+            padding: 0.65rem 1.1rem; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-secondary:active { background: rgba(255,255,255,0.12); }
+        .btn-danger {
+            background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248,113,113,0.3);
+            border-radius: var(--radius-sm); color: var(--c-red);
+            font-family: inherit; font-size: 0.88rem; font-weight: 600;
+            padding: 0.65rem 1.1rem; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-danger:active { background: rgba(248,113,113,0.22); }
+
+        /* ─── Admin Main ─────────────────────────────────────────────────── */
+        .admin-main { padding: 1.2rem; padding-bottom: 3rem; }
+        .section-title {
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--c-text-dim); margin-bottom: 0.85rem;
+        }
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 0.85rem;
+        }
+
+        /* ─── Security Banner ───────────────────────────────────────────── */
+        .security-banner {
+            background: rgba(139,92,246,0.08);
+            border: 1px solid rgba(139,92,246,0.2);
+            border-radius: var(--radius-md);
+            padding: 0.85rem 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.78rem; color: var(--c-text-dim); line-height: 1.55;
+        }
+        .security-banner strong { color: var(--c-primary); }
+
+        /* ─── QR Grid ────────────────────────────────────────────────────── */
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem; margin-bottom: 2rem;
+        }
+        .qr-card {
+            background: var(--c-surface); border: 1px solid var(--c-border);
+            border-radius: var(--radius-lg); padding: 1.2rem;
+            backdrop-filter: blur(12px);
+        }
+        .qr-card-top {
+            display: flex; align-items: flex-start; gap: 0.65rem; margin-bottom: 1rem;
+        }
+        .qr-card-emoji { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
+        .qr-card-info { flex: 1; min-width: 0; }
+        .qr-card-info h3 { font-size: 0.95rem; font-weight: 700; }
+        .qr-card-info small { font-size: 0.74rem; color: var(--c-text-dim); }
+        .stamp-badge {
+            font-size: 0.68rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--c-primary), var(--c-accent));
+            color: #fff; border-radius: 20px; padding: 0.2rem 0.5rem; flex-shrink: 0;
+        }
+        .qr-canvas-wrap {
+            display: flex; justify-content: center;
+            margin-bottom: 0.85rem;
+            background: #fff; border-radius: var(--radius-md); padding: 10px;
+        }
+        .qr-canvas-wrap canvas, .qr-canvas-wrap img { display: block; border-radius: 4px; }
+        .qr-countdown { margin-bottom: 0.85rem; }
+        .countdown-track {
+            height: 5px; background: rgba(255,255,255,0.07);
+            border-radius: 3px; overflow: hidden; margin-bottom: 0.3rem;
+        }
+        .countdown-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--c-primary), var(--c-accent));
+            border-radius: 3px; transition: width 0.9s linear;
+        }
+        .countdown-fill.urgent { background: linear-gradient(90deg, #f87171, #fbbf24); }
+        .countdown-label { font-size: 0.72rem; color: var(--c-text-dim); text-align: right; }
+        .countdown-label span { color: var(--c-text); font-weight: 700; }
+        .qr-card-actions { display: flex; gap: 0.5rem; }
+        .btn-display {
+            flex: 1;
+            background: linear-gradient(135deg, var(--c-primary), var(--c-accent));
+            border: none; border-radius: var(--radius-sm);
+            color: #fff; font-family: inherit; font-size: 0.82rem; font-weight: 700;
+            padding: 0.65rem; cursor: pointer;
+            transition: opacity 0.15s, transform 0.12s;
+        }
+        .btn-display:active { opacity: 0.82; transform: scale(0.97); }
+        .btn-regen {
+            background: rgba(255,255,255,0.06); border: 1px solid var(--c-border);
+            border-radius: var(--radius-sm); color: var(--c-text-dim);
+            font-family: inherit; font-size: 0.78rem; padding: 0.65rem 0.75rem; cursor: pointer;
+        }
+        .btn-regen:active { background: rgba(255,255,255,0.12); }
+        .qr-empty-state {
+            background: var(--c-surface); border: 1px dashed var(--c-border);
+            border-radius: var(--radius-md); padding: 1.5rem; text-align: center;
+            color: var(--c-text-dim); font-size: 0.82rem; margin-bottom: 2rem;
+        }
+
+        /* ─── Venue List ─────────────────────────────────────────────────── */
+        .venue-list { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 2rem; }
+        .venue-row {
+            background: var(--c-surface); border: 1px solid var(--c-border);
+            border-radius: var(--radius-md); padding: 0.85rem 1rem;
+            display: flex; align-items: center; gap: 0.75rem;
+        }
+        .venue-row-emoji { font-size: 1.5rem; flex-shrink: 0; }
+        .venue-row-info { flex: 1; min-width: 0; }
+        .venue-row-info strong { font-size: 0.88rem; display: block; }
+        .venue-row-info small { font-size: 0.72rem; color: var(--c-text-dim); }
+        .badge {
+            font-size: 0.65rem; font-weight: 700; border-radius: 20px;
+            padding: 0.2rem 0.5rem; flex-shrink: 0; white-space: nowrap;
+        }
+        .badge--stamp {
+            background: linear-gradient(135deg, var(--c-primary), var(--c-accent)); color: #fff;
+        }
+        .badge--poi {
+            background: rgba(255,255,255,0.07); border: 1px solid var(--c-border);
+            color: var(--c-text-dim);
+        }
+        .btn-edit-venue {
+            background: rgba(255,255,255,0.06); border: 1px solid var(--c-border);
+            border-radius: var(--radius-sm); color: var(--c-text-dim);
+            font-size: 0.8rem; padding: 0.35rem 0.6rem; cursor: pointer;
+            transition: background 0.15s; flex-shrink: 0; font-family: inherit;
+        }
+        .btn-edit-venue:active { background: rgba(255,255,255,0.14); }
+
+        /* ─── Settings Card ──────────────────────────────────────────────── */
+        .settings-card {
+            background: var(--c-surface); border: 1px solid var(--c-border);
+            border-radius: var(--radius-lg); padding: 1.2rem; margin-bottom: 1.5rem;
+        }
+        .settings-card h3 { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.7rem; }
+        .settings-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+        .settings-row label { font-size: 0.78rem; color: var(--c-text-dim); flex: 1; }
+        .settings-row input {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--c-border);
+            border-radius: var(--radius-sm); color: var(--c-text);
+            font-family: 'Courier New', monospace; font-size: 0.9rem;
+            padding: 0.4rem 0.6rem; width: 100px; letter-spacing: 2px;
+        }
+        .settings-row input:focus { outline: 2px solid var(--c-primary); }
+        .btn-save {
+            background: rgba(139,92,246,0.15); border: 1px solid var(--c-primary);
+            border-radius: var(--radius-sm); color: var(--c-primary);
+            font-family: inherit; font-size: 0.78rem; font-weight: 600;
+            padding: 0.4rem 0.75rem; cursor: pointer;
+        }
+        .btn-save:active { background: rgba(139,92,246,0.3); }
+        .settings-note { font-size: 0.72rem; color: var(--c-text-dim); line-height: 1.5; margin-top: 0.4rem; }
+        .settings-note code { background: rgba(255,255,255,0.07); border-radius: 3px; padding: 1px 4px; font-size: 0.78rem; }
+
+        /* ─── Venue Editor Overlay ───────────────────────────────────────── */
+        #venue-editor {
+            position: fixed; inset: 0; z-index: 500;
+            display: flex; flex-direction: column;
+        }
+        .editor-backdrop {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+        }
+        .editor-sheet {
+            position: relative; z-index: 1;
+            background: var(--c-bg);
+            border-top: 1px solid var(--c-border);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            margin-top: auto;
+            max-height: 96dvh;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        .editor-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 1.2rem 0.85rem;
+            border-bottom: 1px solid var(--c-border);
+            flex-shrink: 0;
+        }
+        .editor-header h3 { font-size: 1rem; font-weight: 800; }
+        .editor-body {
+            flex: 1; overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Map picker */
+        .editor-map-wrap {
+            position: relative; height: 240px; flex-shrink: 0;
+        }
+        #editor-map {
+            width: 100%; height: 100%;
+            background: var(--c-bg);
+        }
+        .map-tap-hint {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.65);
+            font-size: 0.7rem; color: rgba(255,255,255,0.55);
+            text-align: center; padding: 0.35rem;
+            pointer-events: none;
+        }
+
+        /* Fields */
+        .editor-fields { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.85rem; }
+        .field-group { display: flex; flex-direction: column; gap: 0.35rem; }
+        .field-group label { font-size: 0.72rem; font-weight: 700; color: var(--c-text-dim); text-transform: uppercase; letter-spacing: 0.8px; }
+        .field-group input,
+        .field-group textarea,
+        .field-group select {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--c-border);
+            border-radius: var(--radius-sm); color: var(--c-text);
+            font-family: inherit; font-size: 0.9rem; padding: 0.55rem 0.75rem;
+            width: 100%; transition: border-color 0.15s;
+            -webkit-appearance: none; appearance: none;
+        }
+        .field-group input:focus,
+        .field-group textarea:focus,
+        .field-group select:focus {
+            outline: none; border-color: var(--c-primary);
+        }
+        .field-group textarea { resize: vertical; min-height: 72px; }
+        .field-group select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2394a3b8' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 0.75rem center;
+            padding-right: 2.5rem;
+        }
+        .two-col { display: grid; grid-template-columns: 80px 1fr; gap: 0.75rem; }
+        .coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .coord-label-hint {
+            font-size: 0.7rem; color: rgba(255,255,255,0.28); margin-top: -0.5rem;
+            line-height: 1.4;
+        }
+        .coord-label-hint a { color: var(--c-primary); text-decoration: none; }
+
+        /* Editor footer */
+        .editor-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.9rem 1.2rem;
+            border-top: 1px solid var(--c-border);
+            flex-shrink: 0;
+            gap: 0.5rem;
+            background: var(--c-bg);
+        }
+        .editor-footer-right { display: flex; gap: 0.5rem; }
+
+        /* ─── Display Mode (Fullscreen) ──────────────────────────────────── */
+        #display-mode {
+            position: fixed; inset: 0; background: #0a0c10;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 1.5rem; z-index: 1000;
+        }
+        .display-top-bar {
+            position: absolute; top: 0; left: 0; right: 0;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.85rem 1.2rem; background: rgba(0,0,0,0.4);
+        }
+        .display-top-bar .venue-label { font-size: 0.85rem; font-weight: 700; color: var(--c-text-dim); }
+        .btn-exit-display {
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: var(--radius-sm); color: var(--c-text-dim);
+            font-family: inherit; font-size: 0.82rem; font-weight: 600;
+            padding: 0.4rem 0.85rem; cursor: pointer;
+        }
+        .display-venue-header { text-align: center; margin-bottom: 1.2rem; }
+        .display-venue-header .big-emoji { font-size: 3rem; display: block; margin-bottom: 0.4rem; }
+        .display-venue-header h2 {
+            font-size: 1.5rem; font-weight: 800;
+            background: linear-gradient(135deg, var(--c-primary), var(--c-accent));
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .display-venue-header p { font-size: 0.82rem; color: var(--c-text-dim); margin-top: 0.2rem; }
+        .display-qr-container {
+            background: #fff; border-radius: var(--radius-lg); padding: 16px;
+            box-shadow: 0 0 40px rgba(139,92,246,0.25), 0 0 80px rgba(236,72,153,0.15);
+            margin-bottom: 1.2rem;
+        }
+        .display-qr-container canvas,
+        .display-qr-container img { display: block; border-radius: 4px; }
+        .display-countdown-wrap { width: 240px; text-align: center; margin-bottom: 0.8rem; }
+        .display-countdown-track {
+            height: 6px; background: rgba(255,255,255,0.1);
+            border-radius: 3px; overflow: hidden; margin-bottom: 0.4rem;
+        }
+        .display-countdown-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--c-primary), var(--c-accent));
+            border-radius: 3px; transition: width 0.9s linear;
+        }
+        .display-countdown-fill.urgent { background: linear-gradient(90deg, #f87171, #fbbf24); }
+        .display-countdown-text { font-size: 0.8rem; color: var(--c-text-dim); }
+        .display-countdown-text span { color: var(--c-text); font-weight: 700; }
+        .display-hint { font-size: 1rem; font-weight: 600; color: var(--c-text-dim); }
+        .display-security-note {
+            position: absolute; bottom: 1rem;
+            font-size: 0.65rem; color: rgba(255,255,255,0.2); text-align: center;
+        }
+
+        /* ─── Leaflet dark overrides ─────────────────────────────────────── */
+        .leaflet-control-attribution {
+            font-size: 9px !important;
+            background: rgba(0,0,0,0.5) !important;
+            color: #555 !important;
+        }
+        .leaflet-control-attribution a { color: #777 !important; }
+        .leaflet-control-zoom a {
+            background: rgba(20,22,28,0.9) !important;
+            color: #94a3b8 !important;
+            border-color: rgba(255,255,255,0.1) !important;
+        }
+        .leaflet-control-zoom a:hover { background: rgba(139,92,246,0.2) !important; color: #fff !important; }
+    </style>
+</head>
+<body>
+
+<!-- ─── PIN Gate ─────────────────────────────────────────────────────────── -->
+<div id="pin-gate">
+    <div class="pin-box">
+        <h1>First Friday</h1>
+        <p class="subtitle">Admin Panel</p>
+        <div class="pin-dots">
+            <div class="pin-dot" id="dot-0"></div>
+            <div class="pin-dot" id="dot-1"></div>
+            <div class="pin-dot" id="dot-2"></div>
+            <div class="pin-dot" id="dot-3"></div>
+        </div>
+        <p class="pin-error" id="pin-error">&nbsp;</p>
+        <div class="pin-keypad">
+            <button class="pin-key" data-k="1">1</button>
+            <button class="pin-key" data-k="2">2</button>
+            <button class="pin-key" data-k="3">3</button>
+            <button class="pin-key" data-k="4">4</button>
+            <button class="pin-key" data-k="5">5</button>
+            <button class="pin-key" data-k="6">6</button>
+            <button class="pin-key" data-k="7">7</button>
+            <button class="pin-key" data-k="8">8</button>
+            <button class="pin-key" data-k="9">9</button>
+            <button class="pin-key" data-k="⌫">⌫</button>
+            <button class="pin-key" data-k="0">0</button>
+            <button class="pin-key pin-key--blank" aria-hidden="true"></button>
+        </div>
+        <p class="pin-setup-note">Default PIN: <strong>1234</strong> — change in Settings after login.</p>
+    </div>
+</div>
+
+<!-- ─── Admin Panel ───────────────────────────────────────────────────────── -->
+<div id="admin-panel" class="hidden">
+    <header class="admin-header">
+        <div>
+            <h1>Board-Bored <span class="gradient-text">Admin</span></h1>
+            <p class="subtitle">First Friday QR Manager</p>
+        </div>
+        <button class="btn-icon" id="btn-lock">🔒 Lock</button>
+    </header>
+
+    <main class="admin-main">
+
+        <div class="security-banner">
+            <strong>Anti-Gaming:</strong> QR codes are HMAC-signed and rotate every <strong>60 seconds</strong>.
+            Screenshots shared between users expire automatically. Use <strong>Display Mode</strong> to show a live QR at your venue.
+        </div>
+
+        <!-- QR Codes -->
+        <p class="section-title">Stamp QR Codes — Rotate Every 60s</p>
+        <div class="qr-grid" id="qr-grid"></div>
+
+        <!-- Venue / POI Manager -->
+        <div class="section-header">
+            <p class="section-title" style="margin-bottom:0">Venues &amp; Map Points of Interest</p>
+            <button class="btn-primary" id="btn-add-venue" style="font-size:0.78rem;padding:0.45rem 0.85rem;">+ Add Venue</button>
+        </div>
+        <div class="venue-list" id="venue-list"></div>
+        <div style="margin-bottom:2rem">
+            <button class="btn-secondary" id="btn-export-json" style="width:100%;font-size:0.78rem">⬇ Export Venue Data (JSON)</button>
+        </div>
+
+        <!-- Settings -->
+        <p class="section-title">Settings</p>
+        <div class="settings-card">
+            <h3>Change Admin PIN</h3>
+            <div class="settings-row">
+                <label>New 4-digit PIN</label>
+                <input type="password" inputmode="numeric" maxlength="4" id="new-pin-input" placeholder="••••">
+                <button class="btn-save" id="btn-save-pin">Save</button>
+            </div>
+            <p class="settings-note">
+                QR secret is <code id="secret-display">...</code> — must match <code>STAMP_SECRET</code> in <code>app.js</code>.
+            </p>
+        </div>
+
+        <div class="settings-card">
+            <h3>Testing &amp; Reset</h3>
+            <p class="settings-note" style="margin-bottom:0.75rem">
+                Use these during setup and testing. Do not use mid-event.
+            </p>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                <button class="btn-danger" id="btn-reset-stamps" style="flex:1;min-width:140px">
+                    🔄 Reset All Stamps
+                </button>
+                <button class="btn-danger" id="btn-reset-venues" style="flex:1;min-width:140px">
+                    ↩ Restore Default Venues
+                </button>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ─── Venue Editor Overlay ──────────────────────────────────────────────── -->
+<div id="venue-editor" class="hidden">
+    <div class="editor-backdrop" id="editor-backdrop"></div>
+    <div class="editor-sheet">
+
+        <div class="editor-header">
+            <h3 id="editor-title">Edit Venue</h3>
+            <button class="btn-icon" id="editor-cancel-x">✕</button>
+        </div>
+
+        <div class="editor-body">
+            <!-- Map coordinate picker -->
+            <div class="editor-map-wrap">
+                <div id="editor-map"></div>
+                <p class="map-tap-hint">📍 Tap map to drop pin · Drag pin to fine-tune location</p>
+            </div>
+
+            <div class="editor-fields">
+
+                <!-- Coordinates -->
+                <div class="coord-row">
+                    <div class="field-group">
+                        <label>Latitude</label>
+                        <input type="number" id="ed-lat" step="any" placeholder="35.3768">
+                    </div>
+                    <div class="field-group">
+                        <label>Longitude</label>
+                        <input type="number" id="ed-lng" step="any" placeholder="-119.0198">
+                    </div>
+                </div>
+                <p class="coord-label-hint">
+                    Tip: In Google Maps, long-press any spot → tap the coordinates shown at the bottom to copy them.
+                </p>
+
+                <!-- Name & Address -->
+                <div class="field-group">
+                    <label>Venue Name</label>
+                    <input type="text" id="ed-name" placeholder="e.g. Dagny's Coffee" autocomplete="off">
+                </div>
+                <div class="field-group">
+                    <label>Address</label>
+                    <input type="text" id="ed-address" placeholder="e.g. 1600 20th St" autocomplete="off">
+                </div>
+
+                <!-- Emoji + Stamp Slot -->
+                <div class="two-col">
+                    <div class="field-group">
+                        <label>Emoji</label>
+                        <input type="text" id="ed-emoji" placeholder="☕" maxlength="4" autocomplete="off">
+                    </div>
+                    <div class="field-group">
+                        <label>Stamp Slot</label>
+                        <select id="ed-stamp">
+                            <option value="">POI only (no stamp)</option>
+                            <option value="stamp-1">Stamp 1</option>
+                            <option value="stamp-2">Stamp 2</option>
+                            <option value="stamp-3">Stamp 3</option>
+                            <option value="stamp-4">Stamp 4</option>
+                            <option value="stamp-5">Stamp 5</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="field-group">
+                    <label>Description</label>
+                    <textarea id="ed-blurb" rows="3" placeholder="Short description shown in the map drawer..."></textarea>
+                </div>
+
+            </div>
+        </div><!-- /editor-body -->
+
+        <div class="editor-footer">
+            <button class="btn-danger" id="editor-delete">🗑 Delete</button>
+            <div class="editor-footer-right">
+                <button class="btn-secondary" id="editor-cancel-btn">Cancel</button>
+                <button class="btn-primary" id="editor-save">Save Venue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Display Mode ──────────────────────────────────────────────────────── -->
+<div id="display-mode" class="hidden">
+    <div class="display-top-bar">
+        <span class="venue-label" id="display-label">Stamp 1</span>
+        <button class="btn-exit-display" id="btn-exit-display">✕ Exit</button>
+    </div>
+    <div class="display-venue-header">
+        <span class="big-emoji" id="display-emoji">📻</span>
+        <h2 id="display-name">Venue Name</h2>
+        <p id="display-address">Address</p>
+    </div>
+    <div class="display-qr-container" id="display-qr-container"></div>
+    <div class="display-countdown-wrap">
+        <div class="display-countdown-track">
+            <div class="display-countdown-fill" id="display-cd-fill"></div>
+        </div>
+        <p class="display-countdown-text">Refreshes in <span id="display-cd-secs">60</span>s</p>
+    </div>
+    <p class="display-hint">📱 Scan to collect your stamp</p>
+    <p class="display-security-note">QR rotates every 60s · Screenshots expire · Board-Bored First Friday</p>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────── -->
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════════════════
+
+const STAMP_SECRET   = 'bb-ff-bake-2026';   // MUST match app.js
+const VENUE_DATA_KEY = 'bb_venue_data';      // localStorage key shared with app.js
+const PIN_KEY        = 'bb_admin_pin';
+const DEFAULT_PIN    = '1234';
+
+// Default venue dataset — used only when nothing is saved in localStorage
+const DEFAULT_VENUES = [
+    {
+        id: 1, name: 'Bakersfield Vintage', address: '1918 Eye St',
+        coords: [35.3768, -119.0198], emoji: '📻',
+        blurb: 'Curated vintage finds — records, clothing, rare 80s & 90s collectibles.',
+        stamp: 'stamp-1'
+    },
+    {
+        id: 2, name: "Dagny's Coffee", address: '1600 20th St (20th & Eye)',
+        coords: [35.3774, -119.0202], emoji: '☕',
+        blurb: 'Specialty coffee at the corner of 20th and Eye St. The natural gathering point.',
+        stamp: 'stamp-2'
+    },
+    {
+        id: 3, name: 'Bakersfield Art Association', address: '1607 19th St · BAA',
+        coords: [35.3771, -119.0199], emoji: '🎨',
+        blurb: 'Local artists, open studios, and gallery nights since 1951.',
+        stamp: 'stamp-3'
+    },
+    {
+        id: 4, name: 'Encore Boutique', address: '1817 Eye St',
+        coords: [35.3762, -119.0197], emoji: '👗',
+        blurb: 'Consignment boutique with a legendary First Friday $1 sale.',
+        stamp: 'stamp-4'
+    },
+    {
+        id: 5, name: 'Arts Council of Kern', address: '1020 18th St · ACK',
+        coords: [35.3745, -119.0193], emoji: '🏛️',
+        blurb: 'Cultural anchor of the Central Valley. Vendors, food trucks, live stage.',
+        stamp: 'stamp-5'
+    },
+    {
+        id: 6, name: "Sandrini's Public House", address: '1918 Eye St',
+        coords: [35.3768, -119.0200], emoji: '🍻',
+        blurb: 'Italian restaurant and bar with live music.',
+        stamp: null
+    },
+    {
+        id: 7, name: 'The Padre Hotel', address: '1702 18th St',
+        coords: [35.3755, -119.0216], emoji: '🍸',
+        blurb: 'Historic 1928 landmark. Rooftop bar with the best skyline view.',
+        stamp: null
+    },
+    {
+        id: 8, name: "Jerry's Pizza & Pub", address: '1817 Chester Ave',
+        coords: [35.3762, -119.0224], emoji: '🍕',
+        blurb: 'Live music venue since 1992. One block west on Chester Ave.',
+        stamp: null
+    },
+    {
+        id: 9, name: 'Woolworth Building', address: '1400 19th St',
+        coords: [35.3773, -119.0175], emoji: '🏢',
+        blurb: 'Historic mid-century building. A glimpse into downtown Bakersfield\'s past.',
+        stamp: null
+    },
+    {
+        id: 10, name: 'Fox Theater', address: '2001 H St',
+        coords: [35.3777, -119.0213], emoji: '🎭',
+        blurb: 'Historic performing arts venue — perfect start or end for the trail.',
+        stamp: null
+    }
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VENUE DATA (CRUD)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function loadVenues() {
+    try {
+        const raw = localStorage.getItem(VENUE_DATA_KEY);
+        if (raw) return JSON.parse(raw);
+    } catch (_) {}
+    return JSON.parse(JSON.stringify(DEFAULT_VENUES));
+}
+
+function saveVenues(list) {
+    localStorage.setItem(VENUE_DATA_KEY, JSON.stringify(list));
+}
+
+function getStampVenues(list) {
+    return list
+        .filter(v => v.stamp !== null)
+        .sort((a, b) => {
+            const an = parseInt(a.stamp.replace('stamp-', ''));
+            const bn = parseInt(b.stamp.replace('stamp-', ''));
+            return an - bn;
+        });
+}
+
+function nextId(list) {
+    return list.length ? Math.max(...list.map(v => v.id)) + 1 : 1;
+}
+
+// Working copy — edited in-memory, written on Save
+let venues = loadVenues();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TIME + CRYPTO
+// ═══════════════════════════════════════════════════════════════════════════
+
+function getTimeWindow() { return Math.floor(Date.now() / 60000); }
+function secsRemaining()  { return 60 - (Math.floor(Date.now() / 1000) % 60); }
+
+async function computeHmac(secret, message) {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+        'raw', enc.encode(secret),
+        { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+    );
+    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
+    return Array.from(new Uint8Array(sig))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function buildToken(stampNum) {
+    const win  = getTimeWindow();
+    const hmac = await computeHmac(STAMP_SECRET, `${stampNum}:${win}`);
+    return `BB:${stampNum}:${win}:${hmac.substring(0, 8)}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PIN AUTH
+// ═══════════════════════════════════════════════════════════════════════════
+
+let enteredPin = '';
+const savedPin = () => localStorage.getItem(PIN_KEY) || DEFAULT_PIN;
+
+function updatePinDots() {
+    for (let i = 0; i < 4; i++) {
+        document.getElementById(`dot-${i}`).classList.toggle('filled', i < enteredPin.length);
+    }
+}
+
+function showPinError(msg) {
+    const el = document.getElementById('pin-error');
+    el.textContent = msg;
+    setTimeout(() => { el.textContent = '\u00a0'; }, 1800);
+}
+
+function handlePinKey(k) {
+    if (k === '⌫') {
+        enteredPin = enteredPin.slice(0, -1);
+    } else if (enteredPin.length < 4) {
+        enteredPin += k;
+        if (enteredPin.length === 4) {
+            if (enteredPin === savedPin()) {
+                unlockAdmin();
+            } else {
+                showPinError('Incorrect PIN');
+                enteredPin = '';
+            }
+        }
+    }
+    updatePinDots();
+}
+
+document.querySelectorAll('.pin-key[data-k]').forEach(btn => {
+    btn.addEventListener('click', () => handlePinKey(btn.dataset.k));
+});
+document.addEventListener('keydown', e => {
+    if (!document.getElementById('pin-gate').classList.contains('hidden')) {
+        if (e.key >= '0' && e.key <= '9') handlePinKey(e.key);
+        if (e.key === 'Backspace') handlePinKey('⌫');
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADMIN PANEL
+// ═══════════════════════════════════════════════════════════════════════════
+
+let qrInstances    = {};
+let displayQRInst  = null;
+let displayStampNum = null;
+let tickInterval   = null;
+let lastWindow     = null;
+
+function unlockAdmin() {
+    document.getElementById('pin-gate').classList.add('hidden');
+    document.getElementById('admin-panel').classList.remove('hidden');
+    document.getElementById('secret-display').textContent = STAMP_SECRET;
+    venues = loadVenues();
+    buildQRGrid();
+    renderVenueList();
+    startTicker();
+}
+
+function lockAdmin() {
+    document.getElementById('admin-panel').classList.add('hidden');
+    document.getElementById('display-mode').classList.add('hidden');
+    document.getElementById('pin-gate').classList.remove('hidden');
+    stopTicker();
+    enteredPin = '';
+    updatePinDots();
+    qrInstances = {};
+    displayQRInst = null;
+    document.getElementById('qr-grid').innerHTML = '';
+    document.getElementById('venue-list').innerHTML = '';
+}
+
+document.getElementById('btn-lock').addEventListener('click', lockAdmin);
+
+// ─── QR Grid ──────────────────────────────────────────────────────────────
+
+function buildQRGrid() {
+    const grid = document.getElementById('qr-grid');
+    grid.innerHTML = '';
+    qrInstances = {};
+
+    const stampVenues = getStampVenues(venues);
+
+    if (stampVenues.length === 0) {
+        grid.innerHTML = '<div class="qr-empty-state">No stamp venues assigned. Add a venue with a Stamp Slot to generate QR codes.</div>';
+        return;
+    }
+
+    stampVenues.forEach(venue => {
+        const stampNum = parseInt(venue.stamp.replace('stamp-', ''));
+        const card = document.createElement('div');
+        card.className = 'qr-card';
+        card.innerHTML = `
+            <div class="qr-card-top">
+                <span class="qr-card-emoji">${venue.emoji}</span>
+                <div class="qr-card-info">
+                    <h3>${venue.name}</h3>
+                    <small>${venue.address}</small>
+                </div>
+                <span class="stamp-badge">Stamp ${stampNum}</span>
+            </div>
+            <div class="qr-canvas-wrap" id="qr-wrap-${stampNum}"></div>
+            <div class="qr-countdown">
+                <div class="countdown-track">
+                    <div class="countdown-fill" id="cd-fill-${stampNum}"></div>
+                </div>
+                <p class="countdown-label">Refreshes in <span id="cd-secs-${stampNum}">60</span>s</p>
+            </div>
+            <div class="qr-card-actions">
+                <button class="btn-display" data-stamp="${stampNum}">⛶ Display Mode</button>
+                <button class="btn-regen" data-stamp="${stampNum}" title="Force refresh">↻</button>
+            </div>
+        `;
+        grid.appendChild(card);
+
+        const wrap = document.getElementById(`qr-wrap-${stampNum}`);
+        const qr = new QRCode(wrap, {
+            text: 'loading...',
+            width: 220, height: 220,
+            colorDark: '#0f1115', colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
+        qrInstances[stampNum] = qr;
+    });
+
+    document.querySelectorAll('.btn-display[data-stamp]').forEach(btn => {
+        btn.addEventListener('click', () => openDisplayMode(parseInt(btn.dataset.stamp)));
+    });
+    document.querySelectorAll('.btn-regen[data-stamp]').forEach(btn => {
+        btn.addEventListener('click', () => regenQR(parseInt(btn.dataset.stamp)));
+    });
+
+    generateAllQRs();
+}
+
+async function generateAllQRs() {
+    const stampVenues = getStampVenues(venues);
+    for (const venue of stampVenues) {
+        const stampNum = parseInt(venue.stamp.replace('stamp-', ''));
+        const token    = await buildToken(stampNum);
+        try {
+            qrInstances[stampNum].makeCode(token);
+        } catch (_) {
+            const wrap = document.getElementById(`qr-wrap-${stampNum}`);
+            if (wrap) {
+                wrap.innerHTML = '';
+                const qr = new QRCode(wrap, {
+                    text: token, width: 220, height: 220,
+                    colorDark: '#0f1115', colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+                qrInstances[stampNum] = qr;
+            }
+        }
+    }
+    lastWindow = getTimeWindow();
+}
+
+async function regenQR(stampNum) {
+    if (!qrInstances[stampNum]) return;
+    const token = await buildToken(stampNum);
+    qrInstances[stampNum].makeCode(token);
+}
+
+// ─── Ticker ────────────────────────────────────────────────────────────────
+function startTicker() {
+    stopTicker();
+    tickInterval = setInterval(tick, 1000);
+    tick();
+}
+function stopTicker() {
+    if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+}
+
+function tick() {
+    const secs   = secsRemaining();
+    const pct    = (secs / 60) * 100;
+    const urgent = secs <= 10;
+    const win    = getTimeWindow();
+
+    getStampVenues(venues).forEach(venue => {
+        const n = parseInt(venue.stamp.replace('stamp-', ''));
+        const el = document.getElementById(`cd-secs-${n}`);
+        const fill = document.getElementById(`cd-fill-${n}`);
+        if (el) el.textContent = secs;
+        if (fill) { fill.style.width = pct + '%'; fill.classList.toggle('urgent', urgent); }
+    });
+
+    const dSecs = document.getElementById('display-cd-secs');
+    const dFill = document.getElementById('display-cd-fill');
+    if (dSecs) dSecs.textContent = secs;
+    if (dFill) { dFill.style.width = pct + '%'; dFill.classList.toggle('urgent', urgent); }
+
+    if (win !== lastWindow) {
+        generateAllQRs();
+        if (displayStampNum !== null) regenDisplayQR(displayStampNum);
+    }
+}
+
+// ─── Display Mode ──────────────────────────────────────────────────────────
+async function openDisplayMode(stampNum) {
+    const venue = venues.find(v => v.stamp === `stamp-${stampNum}`);
+    if (!venue) return;
+    displayStampNum = stampNum;
+
+    document.getElementById('display-label').textContent   = `Stamp ${stampNum} · ${venue.name}`;
+    document.getElementById('display-emoji').textContent   = venue.emoji;
+    document.getElementById('display-name').textContent    = venue.name;
+    document.getElementById('display-address').textContent = venue.address;
+
+    const container = document.getElementById('display-qr-container');
+    container.innerHTML = '';
+    const token = await buildToken(stampNum);
+    displayQRInst = new QRCode(container, {
+        text: token, width: 240, height: 240,
+        colorDark: '#0f1115', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+    });
+
+    document.getElementById('display-mode').classList.remove('hidden');
+    try { if (navigator.wakeLock) navigator.wakeLock.request('screen'); } catch (_) {}
+}
+
+async function regenDisplayQR(stampNum) {
+    if (!displayQRInst) return;
+    const token = await buildToken(stampNum);
+    try {
+        displayQRInst.makeCode(token);
+    } catch (_) {
+        const container = document.getElementById('display-qr-container');
+        container.innerHTML = '';
+        displayQRInst = new QRCode(container, {
+            text: token, width: 240, height: 240,
+            colorDark: '#0f1115', colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    }
+}
+
+document.getElementById('btn-exit-display').addEventListener('click', () => {
+    document.getElementById('display-mode').classList.add('hidden');
+    displayStampNum = null; displayQRInst = null;
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VENUE LIST
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderVenueList() {
+    const list = document.getElementById('venue-list');
+    list.innerHTML = '';
+
+    if (venues.length === 0) {
+        list.innerHTML = '<div class="qr-empty-state">No venues yet. Click "+ Add Venue" to start.</div>';
+        return;
+    }
+
+    // Show stamp venues first, then POIs
+    const sorted = [
+        ...getStampVenues(venues),
+        ...venues.filter(v => v.stamp === null)
+    ];
+
+    sorted.forEach(venue => {
+        const stampNum = venue.stamp ? parseInt(venue.stamp.replace('stamp-', '')) : null;
+        const badge = stampNum
+            ? `<span class="badge badge--stamp">Stamp ${stampNum}</span>`
+            : `<span class="badge badge--poi">POI</span>`;
+
+        const row = document.createElement('div');
+        row.className = 'venue-row';
+        row.innerHTML = `
+            <span class="venue-row-emoji">${venue.emoji}</span>
+            <div class="venue-row-info">
+                <strong>${venue.name}</strong>
+                <small>${venue.address}</small>
+            </div>
+            ${badge}
+            <button class="btn-edit-venue" data-id="${venue.id}">✏️ Edit</button>
+        `;
+        row.querySelector('.btn-edit-venue').addEventListener('click', () => openVenueEditor(venue.id));
+        list.appendChild(row);
+    });
+}
+
+document.getElementById('btn-add-venue').addEventListener('click', () => openVenueEditor(null));
+
+document.getElementById('btn-export-json').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(venues, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'bb-venues.json';
+    a.click(); URL.revokeObjectURL(url);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VENUE EDITOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+let editorMap        = null;
+let editorMarker     = null;
+let editingVenueId   = null;   // null = new venue
+
+const DOWNTOWN_CENTER = [35.3762, -119.0200];
+
+function openVenueEditor(id) {
+    editingVenueId = id;
+    const venue = id !== null ? venues.find(v => v.id === id) : null;
+
+    document.getElementById('editor-title').textContent = venue ? 'Edit Venue' : 'Add Venue';
+    document.getElementById('editor-delete').style.display = venue ? 'block' : 'none';
+
+    // Populate fields
+    document.getElementById('ed-name').value    = venue ? venue.name    : '';
+    document.getElementById('ed-address').value = venue ? venue.address : '';
+    document.getElementById('ed-emoji').value   = venue ? venue.emoji   : '📍';
+    document.getElementById('ed-stamp').value   = venue ? (venue.stamp || '') : '';
+    document.getElementById('ed-blurb').value   = venue ? venue.blurb   : '';
+
+    const lat = venue ? venue.coords[0] : DOWNTOWN_CENTER[0];
+    const lng = venue ? venue.coords[1] : DOWNTOWN_CENTER[1];
+    document.getElementById('ed-lat').value = lat;
+    document.getElementById('ed-lng').value = lng;
+
+    document.getElementById('venue-editor').classList.remove('hidden');
+
+    // Init map (once only) then update marker
+    if (!editorMap) {
+        initEditorMap(lat, lng);
+    } else {
+        editorMap.setView([lat, lng], 17);
+        editorMarker.setLatLng([lat, lng]);
+        setTimeout(() => editorMap.invalidateSize(), 100);
+    }
+}
+
+function initEditorMap(lat, lng) {
+    editorMap = L.map('editor-map', {
+        center: [lat, lng],
+        zoom: 17,
+        zoomControl: true,
+        attributionControl: false,
+        maxZoom: 19
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd', maxZoom: 20
+    }).addTo(editorMap);
+
+    // Draggable marker
+    editorMarker = L.marker([lat, lng], {
+        draggable: true,
+        icon: L.divIcon({
+            className: '',
+            html: '<div style="width:22px;height:22px;background:#8b5cf6;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.5)"></div>',
+            iconSize: [22, 22], iconAnchor: [11, 11]
+        })
+    }).addTo(editorMap);
+
+    editorMarker.on('dragend', () => {
+        const pos = editorMarker.getLatLng();
+        syncCoordsFromMap(pos.lat, pos.lng);
+    });
+
+    // Click map to move marker
+    editorMap.on('click', e => {
+        editorMarker.setLatLng(e.latlng);
+        syncCoordsFromMap(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Invalidate size after animation
+    setTimeout(() => editorMap.invalidateSize(), 200);
+}
+
+function syncCoordsFromMap(lat, lng) {
+    document.getElementById('ed-lat').value = lat.toFixed(6);
+    document.getElementById('ed-lng').value = lng.toFixed(6);
+}
+
+// Sync from typed coordinate inputs → move map marker
+['ed-lat', 'ed-lng'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+        const lat = parseFloat(document.getElementById('ed-lat').value);
+        const lng = parseFloat(document.getElementById('ed-lng').value);
+        if (!isNaN(lat) && !isNaN(lng) && editorMap && editorMarker) {
+            editorMarker.setLatLng([lat, lng]);
+            editorMap.setView([lat, lng], editorMap.getZoom());
+        }
+    });
+});
+
+function closeVenueEditor() {
+    document.getElementById('venue-editor').classList.add('hidden');
+    editingVenueId = null;
+}
+
+document.getElementById('editor-cancel-x').addEventListener('click', closeVenueEditor);
+document.getElementById('editor-cancel-btn').addEventListener('click', closeVenueEditor);
+document.getElementById('editor-backdrop').addEventListener('click', closeVenueEditor);
+
+document.getElementById('editor-save').addEventListener('click', () => {
+    const name    = document.getElementById('ed-name').value.trim();
+    const address = document.getElementById('ed-address').value.trim();
+    const emoji   = document.getElementById('ed-emoji').value.trim() || '📍';
+    const stamp   = document.getElementById('ed-stamp').value || null;
+    const blurb   = document.getElementById('ed-blurb').value.trim();
+    const lat     = parseFloat(document.getElementById('ed-lat').value);
+    const lng     = parseFloat(document.getElementById('ed-lng').value);
+
+    if (!name) { alert('Venue name is required.'); return; }
+    if (isNaN(lat) || isNaN(lng)) { alert('Please set a valid location on the map or enter coordinates.'); return; }
+
+    // Check for duplicate stamp slot assignment
+    if (stamp) {
+        const conflict = venues.find(v => v.stamp === stamp && v.id !== editingVenueId);
+        if (conflict) {
+            const ok = confirm(`${conflict.name} already uses ${stamp.replace('stamp-', 'Stamp ')}. Reassign it to this venue?`);
+            if (!ok) return;
+            // Remove stamp from the conflicting venue
+            const idx = venues.findIndex(v => v.id === conflict.id);
+            if (idx !== -1) venues[idx] = { ...venues[idx], stamp: null };
+        }
+    }
+
+    if (editingVenueId === null) {
+        // New venue
+        venues.push({ id: nextId(venues), name, address, coords: [lat, lng], emoji, blurb, stamp });
+    } else {
+        // Update existing
+        const idx = venues.findIndex(v => v.id === editingVenueId);
+        if (idx !== -1) venues[idx] = { ...venues[idx], name, address, coords: [lat, lng], emoji, blurb, stamp };
+    }
+
+    saveVenues(venues);
+    closeVenueEditor();
+    renderVenueList();
+    buildQRGrid();   // Rebuild QR grid in case stamp assignments changed
+});
+
+document.getElementById('editor-delete').addEventListener('click', () => {
+    const venue = venues.find(v => v.id === editingVenueId);
+    if (!venue) return;
+    if (!confirm(`Delete "${venue.name}"? This cannot be undone.`)) return;
+    venues = venues.filter(v => v.id !== editingVenueId);
+    saveVenues(venues);
+    closeVenueEditor();
+    renderVenueList();
+    buildQRGrid();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.getElementById('btn-save-pin').addEventListener('click', () => {
+    const val = document.getElementById('new-pin-input').value.trim();
+    if (!/^\d{4}$/.test(val)) { alert('PIN must be exactly 4 digits.'); return; }
+    localStorage.setItem(PIN_KEY, val);
+    document.getElementById('new-pin-input').value = '';
+    alert(`PIN updated to ${val}. Don't forget it!`);
+});
+
+document.getElementById('btn-reset-stamps').addEventListener('click', () => {
+    if (!confirm('Clear all collected stamps for all users on this device? Use this to reset for testing.')) return;
+    localStorage.removeItem('bb_stamps');
+    alert('All stamps cleared. Reload the user app to take effect.');
+});
+
+document.getElementById('btn-reset-venues').addEventListener('click', () => {
+    if (!confirm('Restore all venues to the original defaults? Any custom edits will be lost.')) return;
+    localStorage.removeItem(VENUE_DATA_KEY);
+    venues = loadVenues();
+    renderVenueList();
+    buildQRGrid();
+    alert('Venues restored to defaults.');
+});
+</script>
+</body>
+</html>

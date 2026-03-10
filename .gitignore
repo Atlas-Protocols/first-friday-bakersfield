@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# AI handoff context (internal notes, not needed in public repo)
+CLAUDE_CODE_HANDOFF.md
+CLAUDE_HANDOFF.md
+*.handoff.md
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Deps (if npm is ever added)
+node_modules/
+npm-debug.log*
+
+# Build output (none currently — pure static)
+dist/
+.cache/

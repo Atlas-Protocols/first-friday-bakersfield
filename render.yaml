@@ -1,0 +1,35 @@
+# Board-Bored V1 — Render Static Site Config
+# https://render.com/docs/blueprint-spec
+#
+# Deploys automatically on every push to main.
+# Free tier: unlimited static sites, custom domain support.
+#
+# To deploy:
+#   1. Connect your GitHub repo at https://dashboard.render.com
+#   2. Render detects this file and auto-configures everything.
+
+services:
+  - type: web
+    name: board-bored
+    env: static
+    staticPublishPath: .
+    buildCommand: echo "No build step — pure static site"
+    pullRequestPreviewsEnabled: true
+
+    # Cache busting for HTML/JS/CSS — always fresh
+    headers:
+      - path: "/*.html"
+        name: Cache-Control
+        value: "no-cache, no-store, must-revalidate"
+      - path: "/app.js"
+        name: Cache-Control
+        value: "no-cache, no-store, must-revalidate"
+      - path: "/styles.css"
+        name: Cache-Control
+        value: "no-cache, no-store, must-revalidate"
+      # Long-cache for CDN assets (Leaflet tiles, fonts)
+      - path: "/assets/*"
+        name: Cache-Control
+        value: "public, max-age=31536000, immutable"
+
+    # HTTPS is automatic on Render — required for camera/QR scanner

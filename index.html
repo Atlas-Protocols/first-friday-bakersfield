@@ -86,13 +86,17 @@
     <!-- ─── Reward Modal ─────────────────────────────────────────── -->
     <div id="reward-modal" class="modal-backdrop" aria-hidden="true">
         <div class="modal-card">
-            <h2>🎉 Reward Unlocked!</h2>
-            <p>Show this screen at the <strong>Arts Council of Kern</strong> front desk to claim your prize.</p>
+            <h2>🎉 Trail Complete!</h2>
+            <p>Show this screen at the <strong>Arts Council of Kern</strong> front desk to enter the prize draw.</p>
             <div class="qr-wrap">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=board-bored-first-friday-01&color=ffffff&bgcolor=12141c"
+                <img id="reward-qr-img"
+                     src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=BAKE-LOAD&color=ffffff&bgcolor=12141c"
                      alt="Reward QR" width="150" height="150" loading="lazy">
             </div>
-            <p class="claim-code">BAKE-ART-01</p>
+            <p class="claim-code" id="reward-code">···</p>
+            <p class="reward-pool-line">🏆 Entered to win: <strong id="reward-pool-amount">tonight's prize pool</strong></p>
+            <p class="reward-announce" id="reward-announce-time">Prize drawn at 9:00 PM at the ACK front desk</p>
+            <p class="reward-winner" id="reward-winner" style="display:none"></p>
             <button class="btn btn--primary" id="btn-close-modal">Done</button>
         </div>
     </div>

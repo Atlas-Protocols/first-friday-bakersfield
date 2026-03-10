@@ -116,6 +116,20 @@
     // The modal only triggers when a new stamp is freshly collected this session.
     var freshlyCollectedCount = 0;
 
+    // ─── ENTRY CODE ──────────────────────────────────────────────────────────
+    // Generates a unique entry code when all stamps are collected.
+    // Format: BAKE-MMDD-XXXX  (today's date + 4-char hex)
+    // Stored in localStorage so it persists if the user reopens the app.
+
+    function generateEntryCode() {
+        var now  = new Date();
+        var mm   = String(now.getMonth() + 1).padStart(2, '0');
+        var dd   = String(now.getDate()).padStart(2, '0');
+        var rand = Math.floor(Math.random() * 0xFFFF)
+                       .toString(16).toUpperCase().padStart(4, '0');
+        return 'BAKE-' + mm + dd + '-' + rand;
+    }
+
     // Replay prevention: tokens used this session can't be reused
     var usedTokens = new Set();
 
@@ -364,9 +378,48 @@
         var n = Object.values(collection).filter(Boolean).length;
         document.getElementById('progress-text').textContent = n + ' / ' + TOTAL_STAMPS + ' Stamps';
         document.getElementById('progress-fill').style.width = ((n / TOTAL_STAMPS) * 100) + '%';
+
         // Only show reward modal when stamps are freshly collected this session —
         // not from stale localStorage data loaded on page open.
         if (n >= TOTAL_STAMPS && freshlyCollectedCount > 0) {
+            // Generate entry code once per session (reuse if already generated today)
+            var code = localStorage.getItem('bb_entry_code');
+            if (!code) {
+                code = generateEntryCode();
+                try { localStorage.setItem('bb_entry_code', code); } catch (_) {}
+            }
+
+            // Update modal: entry code text
+            var codeEl = document.getElementById('reward-code');
+            if (codeEl) codeEl.textContent = code;
+
+            // Update modal: QR image with dynamic code
+            var qrEl = document.getElementById('reward-qr-img');
+            if (qrEl) {
+                qrEl.src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150' +
+                           '&data=' + encodeURIComponent(code) +
+                           '&color=ffffff&bgcolor=12141c';
+            }
+
+            // Try to fetch prize pool info from events.json to fill in live amounts
+            fetch('events.json?v=' + Date.now())
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var pool = data.prizePool || {};
+                    var amtEl = document.getElementById('reward-pool-amount');
+                    if (amtEl && pool.current) amtEl.textContent = '$' + pool.current;
+                    var timeEl = document.getElementById('reward-announce-time');
+                    if (timeEl && pool.announcementTime) timeEl.textContent = pool.announcementTime;
+                    if (pool.winner) {
+                        var winnerEl = document.getElementById('reward-winner');
+                        if (winnerEl) {
+                            winnerEl.textContent = '🏆 Tonight\'s winner: ' + pool.winner;
+                            winnerEl.style.display = 'block';
+                        }
+                    }
+                })
+                .catch(function () { /* events.json not available — defaults shown */ });
+
             setTimeout(function () {
                 document.getElementById('reward-modal').classList.add('show');
                 document.getElementById('reward-modal').setAttribute('aria-hidden', 'false');

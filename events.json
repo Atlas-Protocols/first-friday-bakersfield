@@ -1,0 +1,50 @@
+{
+  "_note": "Update this file after each event via Admin → Export events.json, then commit to repo.",
+  "updatedAt": "2026-03-09T00:00:00Z",
+  "organizer": "Atlas Protocols · Board-Bored",
+  "contact": "boardbored@atlasprotocols.com",
+
+  "nextEvent": {
+    "name": "April First Friday",
+    "date": "April 3, 2026",
+    "isoDate": "2026-04-03",
+    "status": "upcoming"
+  },
+
+  "prizePool": {
+    "eventName": "March 2026 First Friday",
+    "eventDate": "March 7, 2026",
+    "current": 85,
+    "max": 100,
+    "currency": "USD",
+    "winner": null,
+    "announcementTime": "9:00 PM at ACK front desk",
+    "contributors": [
+      { "name": "Bakersfield Vintage",          "amount": 20 },
+      { "name": "Dagny's Coffee",               "amount": 20 },
+      { "name": "Bakersfield Art Association",  "amount": 15 },
+      { "name": "Encore Boutique",              "amount": 15 },
+      { "name": "Arts Council of Kern",         "amount": 15 }
+    ]
+  },
+
+  "events": [
+    {
+      "id": 1,
+      "name": "March 2026",
+      "date": "March 7, 2026",
+      "isoDate": "2026-03-07",
+      "status": "active",
+      "totalCompletions": 0,
+      "prizePool": 85,
+      "prizeWinner": null,
+      "venueStats": [
+        { "venueId": 1, "name": "Bakersfield Vintage",         "emoji": "📻", "scans": 0 },
+        { "venueId": 2, "name": "Dagny's Coffee",              "emoji": "☕", "scans": 0 },
+        { "venueId": 3, "name": "Bakersfield Art Association", "emoji": "🎨", "scans": 0 },
+        { "venueId": 4, "name": "Encore Boutique",             "emoji": "👗", "scans": 0 },
+        { "venueId": 5, "name": "Arts Council of Kern",        "emoji": "🏛️", "scans": 0 }
+      ]
+    }
+  ]
+}

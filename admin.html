@@ -433,6 +433,64 @@
             font-size: 0.65rem; color: rgba(255,255,255,0.2); text-align: center;
         }
 
+        /* ─── Event Manager ─────────────────────────────────────────────── */
+        .contributor-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .contributor-row {
+            display: grid; grid-template-columns: 1fr 72px 34px; gap: 0.4rem; align-items: center;
+        }
+        .contributor-row input {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--c-border);
+            border-radius: var(--radius-sm); color: var(--c-text);
+            font-family: inherit; font-size: 0.82rem; padding: 0.38rem 0.55rem; width: 100%;
+        }
+        .contributor-row input:focus { outline: 1px solid var(--c-primary); border-color: var(--c-primary); }
+        .btn-remove-contrib {
+            background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+            border-radius: var(--radius-sm); color: #f87171;
+            font-size: 0.85rem; padding: 0.38rem 0.4rem; cursor: pointer; font-family: inherit;
+        }
+        .btn-remove-contrib:active { background: rgba(248,113,113,0.25); }
+        .btn-add-contrib {
+            background: rgba(139,92,246,0.08); border: 1px dashed rgba(139,92,246,0.45);
+            border-radius: var(--radius-sm); color: var(--c-primary);
+            font-family: inherit; font-size: 0.78rem; padding: 0.42rem 0.75rem;
+            cursor: pointer; width: 100%; margin-top: 0.1rem;
+        }
+        .btn-add-contrib:active { background: rgba(139,92,246,0.18); }
+        .pool-total-display {
+            font-size: 1.5rem; font-weight: 800; text-align: center; padding: 0.3rem 0;
+            background: linear-gradient(135deg, var(--c-primary), var(--c-accent));
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .pool-bar-wrap {
+            height: 8px; background: rgba(255,255,255,0.07);
+            border-radius: 4px; overflow: hidden; margin-bottom: 0.9rem;
+        }
+        .pool-bar-fill {
+            height: 100%; border-radius: 4px; transition: width 0.3s;
+            background: linear-gradient(90deg, var(--c-primary), var(--c-accent));
+        }
+        .pool-bar-fill.full { background: linear-gradient(90deg, #4ade80, #22d3ee); }
+        .venue-stats-grid { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.25rem; }
+        .venue-stat-row { display: grid; grid-template-columns: 1fr 70px; gap: 0.5rem; align-items: center; }
+        .venue-stat-row label { font-size: 0.82rem; color: var(--c-text); }
+        .venue-stat-row input {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--c-border);
+            border-radius: var(--radius-sm); color: var(--c-text);
+            font-family: inherit; font-size: 0.9rem; padding: 0.38rem 0.45rem;
+            text-align: center; width: 100%;
+        }
+        .venue-stat-row input:focus { outline: 1px solid var(--c-primary); border-color: var(--c-primary); }
+        .btn-export-events {
+            width: 100%; background: linear-gradient(135deg, var(--c-primary), var(--c-accent));
+            border: none; border-radius: var(--radius-md); color: #fff;
+            font-family: inherit; font-size: 0.92rem; font-weight: 700;
+            padding: 0.9rem; cursor: pointer; margin-bottom: 2rem;
+            box-shadow: 0 4px 16px rgba(139,92,246,0.3);
+        }
+        .btn-export-events:active { opacity: 0.85; transform: scale(0.98); }
+        .em-input { font-family: inherit !important; letter-spacing: 0 !important; }
+
         /* ─── Leaflet dark overrides ─────────────────────────────────────── */
         .leaflet-control-attribution {
             font-size: 9px !important;
@@ -510,6 +568,90 @@
         <div style="margin-bottom:2rem">
             <button class="btn-secondary" id="btn-export-json" style="width:100%;font-size:0.78rem">⬇ Export Venue Data (JSON)</button>
         </div>
+
+        <!-- ─── Event Manager ─────────────────────────────────────────── -->
+        <p class="section-title">📊 Event Manager</p>
+
+        <!-- Current Event -->
+        <div class="settings-card">
+            <h3>Current Event</h3>
+            <div class="settings-row">
+                <label>Name</label>
+                <input class="em-input" type="text" id="ev-name" placeholder="March 2026" style="width:150px">
+            </div>
+            <div class="settings-row">
+                <label>Date (display)</label>
+                <input class="em-input" type="text" id="ev-date" placeholder="March 7, 2026" style="width:150px">
+            </div>
+            <div class="settings-row">
+                <label>ISO Date</label>
+                <input class="em-input" type="date" id="ev-iso-date" style="width:150px">
+            </div>
+            <div class="settings-row">
+                <label>Trail Completions</label>
+                <input class="em-input" type="number" id="ev-completions" min="0" value="0" style="width:80px">
+            </div>
+        </div>
+
+        <!-- Prize Pool -->
+        <div class="settings-card">
+            <h3>Prize Pool</h3>
+            <div class="pool-total-display" id="pool-total-display">$0 / $100</div>
+            <div class="pool-bar-wrap">
+                <div class="pool-bar-fill" id="pool-bar-fill" style="width:0%"></div>
+            </div>
+            <div class="settings-row">
+                <label>Max Prize ($)</label>
+                <input class="em-input" type="number" id="ev-pool-max" min="0" value="100"
+                       style="width:80px" oninput="updatePoolDisplay()">
+            </div>
+            <div class="settings-row">
+                <label>Announce Time</label>
+                <input class="em-input" type="text" id="ev-announce"
+                       placeholder="9:00 PM at ACK front desk" style="width:165px">
+            </div>
+            <div class="settings-row">
+                <label>Prize Winner</label>
+                <input class="em-input" type="text" id="ev-winner"
+                       placeholder="Leave blank until drawn" style="width:165px">
+            </div>
+            <p class="settings-note" style="margin-bottom:0.5rem;margin-top:0.25rem">Contributors</p>
+            <div class="contributor-list" id="contributor-list"></div>
+            <button class="btn-add-contrib" id="btn-add-contrib">+ Add Contributor</button>
+        </div>
+
+        <!-- Venue Scan Stats -->
+        <div class="settings-card">
+            <h3>Venue Scan Stats
+                <span style="font-size:0.72rem;font-weight:400;color:var(--c-text-dim)">
+                    (enter after event ends)
+                </span>
+            </h3>
+            <div class="venue-stats-grid" id="venue-stats-grid"></div>
+        </div>
+
+        <!-- Next Event -->
+        <div class="settings-card">
+            <h3>Next Event</h3>
+            <div class="settings-row">
+                <label>Name</label>
+                <input class="em-input" type="text" id="next-ev-name"
+                       placeholder="April First Friday" style="width:165px">
+            </div>
+            <div class="settings-row">
+                <label>Date (display)</label>
+                <input class="em-input" type="text" id="next-ev-date"
+                       placeholder="April 3, 2026" style="width:165px">
+            </div>
+            <div class="settings-row">
+                <label>ISO Date</label>
+                <input class="em-input" type="date" id="next-ev-iso" style="width:150px">
+            </div>
+        </div>
+
+        <button class="btn-export-events" id="btn-export-events">
+            ⬇ Export events.json → Commit to Repo
+        </button>
 
         <!-- Settings -->
         <p class="section-title">Settings</p>
@@ -845,6 +987,7 @@ function unlockAdmin() {
     buildQRGrid();
     renderVenueList();
     startTicker();
+    loadEventManagerData();
 }
 
 function lockAdmin() {
@@ -1225,6 +1368,7 @@ document.getElementById('editor-save').addEventListener('click', () => {
     closeVenueEditor();
     renderVenueList();
     buildQRGrid();   // Rebuild QR grid in case stamp assignments changed
+    buildVenueStatInputs();
 });
 
 document.getElementById('editor-delete').addEventListener('click', () => {
@@ -1236,6 +1380,7 @@ document.getElementById('editor-delete').addEventListener('click', () => {
     closeVenueEditor();
     renderVenueList();
     buildQRGrid();
+    buildVenueStatInputs();
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1262,7 +1407,211 @@ document.getElementById('btn-reset-venues').addEventListener('click', () => {
     venues = loadVenues();
     renderVenueList();
     buildQRGrid();
+    buildVenueStatInputs();
     alert('Venues restored to defaults.');
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EVENT MANAGER
+// ═══════════════════════════════════════════════════════════════════════════
+
+let contributors = [];
+let currentEventId = 1;
+
+async function loadEventManagerData() {
+    try {
+        const resp = await fetch('events.json?v=' + Date.now());
+        if (!resp.ok) throw new Error('not found');
+        const data = await resp.json();
+
+        // Current event (last in array)
+        const events = data.events || [];
+        const ev = events[events.length - 1] || {};
+        document.getElementById('ev-name').value        = ev.name   || '';
+        document.getElementById('ev-date').value        = ev.date   || '';
+        if (ev.isoDate) document.getElementById('ev-iso-date').value = ev.isoDate;
+        document.getElementById('ev-completions').value = ev.totalCompletions || 0;
+        currentEventId = ev.id || 1;
+
+        // Prize pool
+        const pool = data.prizePool || {};
+        document.getElementById('ev-pool-max').value = pool.max || 100;
+        document.getElementById('ev-announce').value  = pool.announcementTime || '';
+        document.getElementById('ev-winner').value    = pool.winner || '';
+        contributors = pool.contributors ? [...pool.contributors] : [];
+
+        // Next event
+        const next = data.nextEvent || {};
+        document.getElementById('next-ev-name').value = next.name || '';
+        document.getElementById('next-ev-date').value = next.date || '';
+        if (next.isoDate) document.getElementById('next-ev-iso').value = next.isoDate;
+
+    } catch (_) {
+        // First time or file missing — seed some defaults
+        contributors = [
+            { name: 'Bakersfield Vintage', amount: 20 },
+            { name: "Dagny's Coffee",      amount: 20 }
+        ];
+    }
+    renderContributors();
+    buildVenueStatInputs();
+
+    // Pre-fill venue stat values from loaded event data (after inputs exist)
+    // This runs after buildVenueStatInputs creates the inputs
+    try {
+        const resp2 = await fetch('events.json?v=' + Date.now());
+        if (resp2.ok) {
+            const data2 = await resp2.json();
+            const events2 = data2.events || [];
+            const ev2 = events2[events2.length - 1] || {};
+            if (ev2.venueStats) {
+                ev2.venueStats.forEach(vs => {
+                    const inp = document.getElementById(`ev-stat-${vs.venueId}`);
+                    if (inp) inp.value = vs.scans || 0;
+                });
+            }
+        }
+    } catch (_) {}
+
+    updatePoolDisplay();
+}
+
+function updatePoolDisplay() {
+    const total = contributors.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    const max   = parseInt(document.getElementById('ev-pool-max')?.value) || 100;
+    const pct   = Math.min(100, (total / max) * 100);
+    const disp  = document.getElementById('pool-total-display');
+    const fill  = document.getElementById('pool-bar-fill');
+    if (disp) disp.textContent = `$${total} / $${max}`;
+    if (fill) { fill.style.width = pct + '%'; fill.classList.toggle('full', pct >= 100); }
+}
+
+function renderContributors() {
+    const list = document.getElementById('contributor-list');
+    if (!list) return;
+    list.innerHTML = '';
+    contributors.forEach((c, idx) => {
+        const row = document.createElement('div');
+        row.className = 'contributor-row';
+        row.innerHTML = `
+            <input type="text" placeholder="Venue / Sponsor name"
+                   value="${(c.name || '').replace(/"/g, '&quot;')}"
+                   data-ci="${idx}" data-field="name">
+            <input type="number" placeholder="$" min="0" max="9999"
+                   value="${c.amount || ''}"
+                   data-ci="${idx}" data-field="amount">
+            <button class="btn-remove-contrib" data-ri="${idx}">✕</button>
+        `;
+        row.querySelectorAll('input').forEach(inp => {
+            inp.addEventListener('input', () => {
+                const i = parseInt(inp.dataset.ci);
+                if (inp.dataset.field === 'name') contributors[i].name = inp.value;
+                else contributors[i].amount = Number(inp.value);
+                updatePoolDisplay();
+            });
+        });
+        row.querySelector('.btn-remove-contrib').addEventListener('click', () => removeContributor(idx));
+        list.appendChild(row);
+    });
+    updatePoolDisplay();
+}
+
+function removeContributor(idx) {
+    contributors.splice(idx, 1);
+    renderContributors();
+}
+
+document.getElementById('btn-add-contrib').addEventListener('click', () => {
+    contributors.push({ name: '', amount: 0 });
+    renderContributors();
+});
+
+function buildVenueStatInputs() {
+    const grid = document.getElementById('venue-stats-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const stampVenues = getStampVenues(venues);
+    if (!stampVenues.length) {
+        grid.innerHTML = '<p style="font-size:0.8rem;color:var(--c-text-dim)">No stamp venues configured yet.</p>';
+        return;
+    }
+    stampVenues.forEach(venue => {
+        const row = document.createElement('div');
+        row.className = 'venue-stat-row';
+        row.innerHTML = `
+            <label>${venue.emoji} ${venue.name}</label>
+            <input type="number" id="ev-stat-${venue.id}" min="0" value="0">
+        `;
+        grid.appendChild(row);
+    });
+}
+
+document.getElementById('btn-export-events').addEventListener('click', () => {
+    const evName      = document.getElementById('ev-name').value.trim();
+    const evDate      = document.getElementById('ev-date').value.trim();
+    const evIso       = document.getElementById('ev-iso-date').value;
+    const completions = parseInt(document.getElementById('ev-completions').value) || 0;
+    const poolMax     = parseInt(document.getElementById('ev-pool-max').value) || 100;
+    const announce    = document.getElementById('ev-announce').value.trim() || '9:00 PM at ACK front desk';
+    const winner      = document.getElementById('ev-winner').value.trim() || null;
+    const nextName    = document.getElementById('next-ev-name').value.trim();
+    const nextDate    = document.getElementById('next-ev-date').value.trim();
+    const nextIso     = document.getElementById('next-ev-iso').value;
+
+    const poolTotal   = contributors.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+
+    // Build venue stats from inputs
+    const venueStats = getStampVenues(venues).map(venue => ({
+        venueId: venue.id,
+        name:    venue.name,
+        emoji:   venue.emoji,
+        scans:   parseInt(document.getElementById(`ev-stat-${venue.id}`)?.value) || 0
+    }));
+
+    const output = {
+        _note:    'Update this file after each event via Admin → Export events.json, then commit to repo.',
+        updatedAt: new Date().toISOString(),
+        organizer: 'Atlas Protocols · Board-Bored',
+        contact:   'boardbored@atlasprotocols.com',
+
+        nextEvent: {
+            name:    nextName || 'Next First Friday',
+            date:    nextDate,
+            isoDate: nextIso,
+            status:  'upcoming'
+        },
+
+        prizePool: {
+            eventName:        evName,
+            eventDate:        evDate,
+            current:          poolTotal,
+            max:              poolMax,
+            currency:         'USD',
+            winner:           winner,
+            announcementTime: announce,
+            contributors:     contributors.filter(c => c.name || c.amount)
+        },
+
+        events: [{
+            id:               currentEventId,
+            name:             evName,
+            date:             evDate,
+            isoDate:          evIso,
+            status:           winner ? 'completed' : 'active',
+            totalCompletions: completions,
+            prizePool:        poolTotal,
+            prizeWinner:      winner,
+            venueStats:       venueStats
+        }]
+    };
+
+    const blob = new Blob([JSON.stringify(output, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'events.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    setTimeout(() => alert('events.json downloaded!\n\nNext step: replace events.json in the repo root and push to GitHub → auto-deploys in ~20s.'), 300);
 });
 </script>
 </body>

@@ -593,17 +593,33 @@
             </div>
         </div>
 
-        <!-- Prize Pool -->
+        <!-- Prize of the Month -->
         <div class="settings-card">
-            <h3>Prize Pool</h3>
-            <div class="pool-total-display" id="pool-total-display">$0 / $100</div>
-            <div class="pool-bar-wrap">
-                <div class="pool-bar-fill" id="pool-bar-fill" style="width:0%"></div>
-            </div>
+            <h3>Prize of the Month</h3>
             <div class="settings-row">
-                <label>Max Prize ($)</label>
-                <input class="em-input" type="number" id="ev-pool-max" min="0" value="100"
-                       style="width:80px" oninput="updatePoolDisplay()">
+                <label>Item Name</label>
+                <input class="em-input" type="text" id="ev-prize-item"
+                       placeholder="Hand-thrown ceramic mug" style="width:200px">
+            </div>
+            <div class="field-group" style="margin-top:0.5rem">
+                <label>Description</label>
+                <textarea class="em-input" id="ev-prize-desc" rows="2"
+                          placeholder="Short description shown in vendor hub..." style="width:100%;resize:vertical"></textarea>
+            </div>
+            <div class="settings-row" style="margin-top:0.5rem">
+                <label>Donor Name</label>
+                <input class="em-input" type="text" id="ev-prize-donor"
+                       placeholder="Bakersfield Art Association" style="width:200px">
+            </div>
+            <div class="field-group" style="margin-top:0.5rem">
+                <label>Donor Story</label>
+                <textarea class="em-input" id="ev-prize-donor-story" rows="2"
+                          placeholder="The BAA has been part of the arts scene..." style="width:100%;resize:vertical"></textarea>
+            </div>
+            <div class="settings-row" style="margin-top:0.5rem">
+                <label>Estimated Value</label>
+                <input class="em-input" type="text" id="ev-prize-value"
+                       placeholder="$45" style="width:80px">
             </div>
             <div class="settings-row">
                 <label>Announce Time</label>
@@ -615,9 +631,30 @@
                 <input class="em-input" type="text" id="ev-winner"
                        placeholder="Leave blank until drawn" style="width:165px">
             </div>
-            <p class="settings-note" style="margin-bottom:0.5rem;margin-top:0.25rem">Contributors</p>
+        </div>
+
+        <!-- Memory Quest -->
+        <div class="settings-card">
+            <h3>Memory Quest</h3>
+            <div class="settings-row">
+                <label>Google Photos Album URL</label>
+                <input class="em-input" type="url" id="ev-mq-album"
+                       placeholder="https://photos.app.goo.gl/..." style="width:200px">
+            </div>
+            <div class="settings-row">
+                <label>Event Hashtag</label>
+                <input class="em-input" type="text" id="ev-mq-hashtag"
+                       placeholder="BBFF0307" style="width:110px">
+            </div>
+            <p class="settings-note">Album link and hashtag appear in the reward modal for participants who join the Memory Quest.</p>
+        </div>
+
+        <!-- Our Supporters -->
+        <div class="settings-card">
+            <h3>Our Supporters</h3>
+            <p class="settings-note" style="margin-bottom:0.6rem">Venues and sponsors listed in the vendor hub as community supporters.</p>
             <div class="contributor-list" id="contributor-list"></div>
-            <button class="btn-add-contrib" id="btn-add-contrib">+ Add Contributor</button>
+            <button class="btn-add-contrib" id="btn-add-contrib">+ Add Supporter</button>
         </div>
 
         <!-- Venue Scan Stats -->
@@ -1433,12 +1470,21 @@ async function loadEventManagerData() {
         document.getElementById('ev-completions').value = ev.totalCompletions || 0;
         currentEventId = ev.id || 1;
 
-        // Prize pool
-        const pool = data.prizePool || {};
-        document.getElementById('ev-pool-max').value = pool.max || 100;
-        document.getElementById('ev-announce').value  = pool.announcementTime || '';
-        document.getElementById('ev-winner').value    = pool.winner || '';
-        contributors = pool.contributors ? [...pool.contributors] : [];
+        // Prize of the Month
+        const prize = data.prizeOfMonth || {};
+        document.getElementById('ev-prize-item').value        = prize.item || '';
+        document.getElementById('ev-prize-desc').value        = prize.description || '';
+        document.getElementById('ev-prize-donor').value       = prize.donor || '';
+        document.getElementById('ev-prize-donor-story').value = prize.donorStory || '';
+        document.getElementById('ev-prize-value').value       = prize.estimatedValue || '';
+        document.getElementById('ev-announce').value          = prize.announcementTime || '';
+        document.getElementById('ev-winner').value            = prize.winner || '';
+        contributors = data.contributors ? [...data.contributors] : [];
+
+        // Memory Quest
+        const mq = data.memoryQuest || {};
+        document.getElementById('ev-mq-album').value   = mq.albumUrl || '';
+        document.getElementById('ev-mq-hashtag').value = mq.eventHashtag || '';
 
         // Next event
         const next = data.nextEvent || {};
@@ -1472,17 +1518,14 @@ async function loadEventManagerData() {
             }
         }
     } catch (_) {}
-
-    updatePoolDisplay();
 }
 
 function updatePoolDisplay() {
-    const total = contributors.reduce((s, c) => s + (Number(c.amount) || 0), 0);
-    const max   = parseInt(document.getElementById('ev-pool-max')?.value) || 100;
-    const pct   = Math.min(100, (total / max) * 100);
-    const disp  = document.getElementById('pool-total-display');
-    const fill  = document.getElementById('pool-bar-fill');
-    if (disp) disp.textContent = `$${total} / $${max}`;
+    // Legacy stub — pool display removed; contributors are now informational only.
+    const fill = document.getElementById('pool-bar-fill');
+    const disp = document.getElementById('pool-total-display');
+    if (fill) fill.style.width = '0%';
+    if (disp) disp.textContent = '';
     if (fill) { fill.style.width = pct + '%'; fill.classList.toggle('full', pct >= 100); }
 }
 
@@ -1551,14 +1594,22 @@ document.getElementById('btn-export-events').addEventListener('click', () => {
     const evDate      = document.getElementById('ev-date').value.trim();
     const evIso       = document.getElementById('ev-iso-date').value;
     const completions = parseInt(document.getElementById('ev-completions').value) || 0;
-    const poolMax     = parseInt(document.getElementById('ev-pool-max').value) || 100;
     const announce    = document.getElementById('ev-announce').value.trim() || '9:00 PM at ACK front desk';
     const winner      = document.getElementById('ev-winner').value.trim() || null;
     const nextName    = document.getElementById('next-ev-name').value.trim();
     const nextDate    = document.getElementById('next-ev-date').value.trim();
     const nextIso     = document.getElementById('next-ev-iso').value;
 
-    const poolTotal   = contributors.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    // Prize of the Month fields
+    const prizeItem        = document.getElementById('ev-prize-item').value.trim();
+    const prizeDesc        = document.getElementById('ev-prize-desc').value.trim();
+    const prizeDonor       = document.getElementById('ev-prize-donor').value.trim();
+    const prizeDonorStory  = document.getElementById('ev-prize-donor-story').value.trim();
+    const prizeValue       = document.getElementById('ev-prize-value').value.trim();
+
+    // Memory Quest fields
+    const mqAlbum   = document.getElementById('ev-mq-album').value.trim();
+    const mqHashtag = document.getElementById('ev-mq-hashtag').value.trim();
 
     // Build venue stats from inputs
     const venueStats = getStampVenues(venues).map(venue => ({
@@ -1581,15 +1632,24 @@ document.getElementById('btn-export-events').addEventListener('click', () => {
             status:  'upcoming'
         },
 
-        prizePool: {
+        prizeOfMonth: {
             eventName:        evName,
             eventDate:        evDate,
-            current:          poolTotal,
-            max:              poolMax,
-            currency:         'USD',
-            winner:           winner,
+            item:             prizeItem,
+            description:      prizeDesc,
+            donor:            prizeDonor,
+            donorStory:       prizeDonorStory,
+            estimatedValue:   prizeValue,
             announcementTime: announce,
-            contributors:     contributors.filter(c => c.name || c.amount)
+            winner:           winner
+        },
+
+        contributors: contributors.filter(c => c.name || c.amount),
+
+        memoryQuest: {
+            albumUrl:     mqAlbum || 'https://photos.app.goo.gl/REPLACE_WITH_ALBUM_LINK',
+            hashtag:      'BoardBoredFF',
+            eventHashtag: mqHashtag
         },
 
         events: [{
@@ -1599,7 +1659,7 @@ document.getElementById('btn-export-events').addEventListener('click', () => {
             isoDate:          evIso,
             status:           winner ? 'completed' : 'active',
             totalCompletions: completions,
-            prizePool:        poolTotal,
+            prizeItem:        prizeItem,
             prizeWinner:      winner,
             venueStats:       venueStats
         }]

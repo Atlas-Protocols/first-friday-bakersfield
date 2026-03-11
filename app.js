@@ -130,6 +130,21 @@
         return 'BAKE-' + mm + dd + '-' + rand;
     }
 
+    // ─── MEMORY QUEST ────────────────────────────────────────────────────────
+    var MEMORY_QUEST_KEY = 'bb_memory_quest';
+    var MEMORY_PROMPTS = [
+        'What surprised you tonight?',
+        'What do you want to see more of in Bakersfield?',
+        'A moment you want to remember forever.'
+    ];
+
+    function isMemoryQuestJoined() {
+        try { return localStorage.getItem(MEMORY_QUEST_KEY) === 'true'; } catch (_) { return false; }
+    }
+    function joinMemoryQuest() {
+        try { localStorage.setItem(MEMORY_QUEST_KEY, 'true'); } catch (_) {}
+    }
+
     // Replay prevention: tokens used this session can't be reused
     var usedTokens = new Set();
 
@@ -401,20 +416,39 @@
                            '&color=ffffff&bgcolor=12141c';
             }
 
-            // Try to fetch prize pool info from events.json to fill in live amounts
+            // Fetch live prize + memory quest data from events.json
             fetch('events.json?v=' + Date.now())
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
-                    var pool = data.prizePool || {};
-                    var amtEl = document.getElementById('reward-pool-amount');
-                    if (amtEl && pool.current) amtEl.textContent = '$' + pool.current;
-                    var timeEl = document.getElementById('reward-announce-time');
-                    if (timeEl && pool.announcementTime) timeEl.textContent = pool.announcementTime;
-                    if (pool.winner) {
-                        var winnerEl = document.getElementById('reward-winner');
-                        if (winnerEl) {
-                            winnerEl.textContent = '🏆 Tonight\'s winner: ' + pool.winner;
-                            winnerEl.style.display = 'block';
+                    var prize = data.prizeOfMonth || {};
+                    var itemEl  = document.getElementById('reward-prize-item');
+                    var donorEl = document.getElementById('reward-prize-donor');
+                    var valEl   = document.getElementById('reward-prize-value');
+                    var timeEl  = document.getElementById('reward-announce-time');
+                    if (itemEl  && prize.item)             itemEl.textContent  = prize.item;
+                    if (donorEl && prize.donor)            donorEl.textContent = 'Donated by ' + prize.donor;
+                    if (valEl   && prize.estimatedValue)   valEl.textContent   = prize.estimatedValue;
+                    if (timeEl  && prize.announcementTime) timeEl.textContent  = 'Prize drawn at ' + prize.announcementTime;
+                    if (prize.winner) {
+                        var winEl = document.getElementById('reward-winner');
+                        if (winEl) {
+                            winEl.textContent = 'Tonight\'s winner: ' + prize.winner;
+                            winEl.style.display = 'block';
+                        }
+                    }
+                    // Memory Quest social share section
+                    if (isMemoryQuestJoined()) {
+                        var mq      = data.memoryQuest || {};
+                        var share   = document.getElementById('reward-mq-share');
+                        var hashEl  = document.getElementById('reward-mq-hashtags');
+                        var albumEl = document.getElementById('reward-mq-album-link');
+                        if (share) share.style.display = 'block';
+                        if (hashEl && mq.hashtag) {
+                            hashEl.textContent = '#' + mq.hashtag + (mq.eventHashtag ? ' · #' + mq.eventHashtag : '');
+                        }
+                        if (albumEl && mq.albumUrl && mq.albumUrl.indexOf('REPLACE') === -1) {
+                            albumEl.href = mq.albumUrl;
+                            albumEl.style.display = 'inline-flex';
                         }
                     }
                 })
@@ -430,6 +464,42 @@
     document.getElementById('btn-close-modal').addEventListener('click', function () {
         document.getElementById('reward-modal').classList.remove('show');
         document.getElementById('reward-modal').setAttribute('aria-hidden', 'true');
+    });
+
+    // ─── MEMORY QUEST UI ─────────────────────────────────────────────────────
+
+    function showMemoryQuestOptIn() {
+        var el = document.getElementById('mq-optin-overlay');
+        if (el) { el.classList.add('show'); el.setAttribute('aria-hidden', 'false'); }
+    }
+    function hideMemoryQuestOptIn() {
+        var el = document.getElementById('mq-optin-overlay');
+        if (el) { el.classList.remove('show'); el.setAttribute('aria-hidden', 'true'); }
+    }
+
+    function showMemoryPrompt() {
+        var card = document.getElementById('mq-prompt-card');
+        var text = document.getElementById('mq-prompt-text');
+        if (!card || !text) return;
+        var n = Object.values(collection).filter(Boolean).length;
+        text.textContent = MEMORY_PROMPTS[(n - 1) % MEMORY_PROMPTS.length];
+        card.classList.add('show');
+        card.setAttribute('aria-hidden', 'false');
+        setTimeout(function () {
+            card.classList.remove('show');
+            card.setAttribute('aria-hidden', 'true');
+        }, 5000);
+    }
+
+    document.getElementById('mq-join-btn').addEventListener('click', function () {
+        joinMemoryQuest();
+        hideMemoryQuestOptIn();
+        showMemoryPrompt();
+    });
+    document.getElementById('mq-skip-btn').addEventListener('click', hideMemoryQuestOptIn);
+    document.getElementById('mq-prompt-dismiss').addEventListener('click', function () {
+        var card = document.getElementById('mq-prompt-card');
+        if (card) { card.classList.remove('show'); card.setAttribute('aria-hidden', 'true'); }
     });
 
     // ─── QR SCANNER ──────────────────────────────────────────────────────────
@@ -563,7 +633,15 @@
         usedTokens.add(data);
         markStampCollected(stampId);
         setScannerStatus('✅ ' + VENUES[venueId - 1].name + ' stamp collected!', 'success');
-        setTimeout(function () { closeScanner(); }, 1500);
+        setTimeout(function () {
+            closeScanner();
+            // Memory Quest: offer opt-in on first stamp; show prompt on subsequent scans if joined
+            if (freshlyCollectedCount === 1 && !isMemoryQuestJoined()) {
+                setTimeout(showMemoryQuestOptIn, 300);
+            } else if (isMemoryQuestJoined()) {
+                setTimeout(showMemoryPrompt, 300);
+            }
+        }, 1500);
     }
 
     function setScannerStatus(msg, type) {

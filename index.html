@@ -94,10 +94,46 @@
                      alt="Reward QR" width="150" height="150" loading="lazy">
             </div>
             <p class="claim-code" id="reward-code">···</p>
-            <p class="reward-pool-line">🏆 Entered to win: <strong id="reward-pool-amount">tonight's prize pool</strong></p>
+            <div class="reward-prize-block">
+                <p class="reward-prize-label">🏆 Prize of the Month</p>
+                <p class="reward-prize-item" id="reward-prize-item">tonight's prize</p>
+                <p class="reward-prize-donor" id="reward-prize-donor"></p>
+                <p class="reward-prize-value" id="reward-prize-value"></p>
+            </div>
             <p class="reward-announce" id="reward-announce-time">Prize drawn at 9:00 PM at the ACK front desk</p>
             <p class="reward-winner" id="reward-winner" style="display:none"></p>
+            <p class="reward-ledger-note">📖 Want to be in the ledger? Tell the ACK staff your name.</p>
+            <div id="reward-mq-share" class="reward-mq-share" style="display:none">
+                <p class="mq-share-label">📸 Share your night</p>
+                <p id="reward-mq-hashtags" class="mq-share-hashtags">#BoardBoredFF</p>
+                <a id="reward-mq-album-link" class="btn btn--secondary mq-album-btn"
+                   href="#" target="_blank" rel="noopener" style="display:none">
+                    🖼 View Community Album
+                </a>
+            </div>
             <button class="btn btn--primary" id="btn-close-modal">Done</button>
+        </div>
+    </div>
+
+    <!-- ─── Memory Quest Opt-in Overlay ─────────────────────────── -->
+    <div id="mq-optin-overlay" class="mq-optin-backdrop" aria-hidden="true" aria-label="Memory Quest invitation">
+        <div class="mq-optin-card">
+            <p class="mq-optin-eyebrow">Optional</p>
+            <h3>Join the Memory Quest?</h3>
+            <p class="mq-optin-body">We'll show you a photo prompt at each stop — gentle invitations to capture the night your way.</p>
+            <div class="mq-optin-actions">
+                <button class="btn btn--primary" id="mq-join-btn">Join →</button>
+                <button class="btn btn--secondary" id="mq-skip-btn">Skip</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Memory Quest Prompt Card ─────────────────────────────── -->
+    <div id="mq-prompt-card" class="mq-prompt-card" aria-hidden="true" aria-label="Memory Quest prompt">
+        <div class="mq-prompt-inner">
+            <p class="mq-prompt-label">📸 Memory Quest</p>
+            <p id="mq-prompt-text" class="mq-prompt-text">What surprised you tonight?</p>
+            <button id="mq-prompt-dismiss" class="mq-prompt-dismiss" aria-label="Dismiss">Got it ✕</button>
         </div>
     </div>
 

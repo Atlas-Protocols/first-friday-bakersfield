@@ -577,3 +577,190 @@ body {
     color: #555 !important;
 }
 .leaflet-control-attribution a { color: #777 !important; }
+
+/* ─── Reward Modal — Prize of the Month ─────────────────────────────────── */
+.reward-prize-block {
+    background: rgba(251, 191, 36, 0.07);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 0.9rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+.reward-prize-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #fbbf24;
+    margin-bottom: 0.3rem;
+}
+.reward-prize-item {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 0.2rem;
+}
+.reward-prize-donor {
+    font-size: 0.78rem;
+    color: var(--c-text-dim);
+    margin-bottom: 0.1rem;
+}
+.reward-prize-value {
+    font-size: 0.72rem;
+    color: #fbbf24;
+    font-weight: 600;
+}
+
+/* Ledger callout */
+.reward-ledger-note {
+    font-size: 0.78rem;
+    color: var(--c-text-dim);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px dashed var(--c-border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.85rem !important;
+    line-height: 1.5;
+}
+
+/* Memory Quest share section inside modal */
+.reward-mq-share {
+    border-top: 1px solid var(--c-border);
+    padding-top: 0.85rem;
+    margin-bottom: 1rem;
+}
+.mq-share-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--c-primary);
+    margin-bottom: 0.4rem;
+}
+.mq-share-hashtags {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 0.6rem;
+    letter-spacing: 0.5px;
+}
+.mq-album-btn {
+    font-size: 0.82rem;
+    padding: 0.6rem 0.85rem;
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    text-decoration: none;
+}
+
+/* ─── Memory Quest Opt-in Overlay ───────────────────────────────────────── */
+.mq-optin-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease;
+    padding-bottom: 2rem;
+}
+.mq-optin-backdrop.show { opacity: 1; visibility: visible; }
+.mq-optin-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-lg);
+    padding: 1.6rem 1.4rem;
+    width: 88%;
+    max-width: 360px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+    transform: translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mq-optin-backdrop.show .mq-optin-card { transform: translateY(0); }
+.mq-optin-eyebrow {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--c-primary);
+    margin-bottom: 0.4rem;
+}
+.mq-optin-card h3 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--c-text);
+    margin-bottom: 0.5rem;
+}
+.mq-optin-body {
+    font-size: 0.83rem;
+    color: var(--c-text-dim);
+    line-height: 1.5;
+    margin-bottom: 1.1rem;
+}
+.mq-optin-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+}
+
+/* ─── Memory Quest Prompt Card (bottom toast) ───────────────────────────── */
+.mq-prompt-card {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    z-index: 600;
+    width: 88%;
+    max-width: 360px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mq-prompt-card.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+.mq-prompt-inner {
+    background: rgba(139, 92, 246, 0.18);
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.1rem;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.mq-prompt-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--c-primary);
+}
+.mq-prompt-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--c-text);
+    line-height: 1.4;
+}
+.mq-prompt-dismiss {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    color: var(--c-text-dim);
+    font-size: 0.72rem;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 0.2rem;
+}
+.mq-prompt-dismiss:active { opacity: 0.6; }

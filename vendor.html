@@ -212,6 +212,22 @@
             font-size: 0.88rem;
         }
         .prize-winner-banner strong { color: var(--c-gold); }
+        .prize-item-name { font-size: 1.6rem; font-weight: 800; color: var(--c-text); margin-bottom: 0.5rem; line-height: 1.15; }
+        .prize-value-badge {
+            display: inline-block;
+            background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.3);
+            border-radius: 20px; font-size: 0.78rem; font-weight: 700;
+            color: var(--c-gold); padding: 0.25rem 0.75rem; margin-bottom: 1rem;
+        }
+        .prize-item-desc { font-size: 0.88rem; color: var(--c-dim); line-height: 1.6; margin-bottom: 1.25rem; }
+        .prize-donor-block {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--c-border);
+            border-radius: var(--r-md); padding: 0.9rem 1rem; margin-bottom: 1.25rem;
+        }
+        .prize-donor-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--c-dim); display: block; margin-bottom: 0.2rem; }
+        .prize-donor-name { font-size: 0.95rem; font-weight: 700; color: var(--c-text); display: block; margin-bottom: 0.4rem; }
+        .prize-donor-story { font-size: 0.78rem; color: var(--c-dim); line-height: 1.55; }
+        .supporters-heading { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--c-dim); margin-top: 1.25rem; margin-bottom: 0.75rem; }
         .prize-note {
             font-size: 0.75rem; color: var(--c-dim);
             margin-top: 1rem;
@@ -477,38 +493,29 @@
             </div>
             <div class="stat-cell">
                 <div class="stat-value" id="stat-prize">—</div>
-                <div class="stat-label">Total Prizes Paid</div>
+                <div class="stat-label">Prize Events</div>
             </div>
         </div>
     </div>
 
-    <!-- ─── Prize Pool ──────────────────────────────────────────────── -->
+    <!-- ─── Prize of the Month ──────────────────────────────────────── -->
     <section class="section" id="prize">
         <div class="container">
-            <p class="section-label">🏆 Live Prize Pool</p>
+            <p class="section-label">🏆 Prize of the Month</p>
             <div class="prize-card" id="prize-card">
                 <div class="prize-header">
                     <div>
-                        <h2>Tonight's Prize Pool</h2>
+                        <h2 id="prize-item-name">Prize of the Month</h2>
                         <p id="prize-event-label">Loading…</p>
                     </div>
                     <span class="prize-event-badge" id="prize-badge">Active</span>
                 </div>
-                <div class="prize-amount-row">
-                    <span class="prize-amount" id="prize-amount">$—</span>
-                    <span class="prize-max" id="prize-max-label">/ $100 max</span>
-                </div>
-                <div class="prize-bar-wrap">
-                    <div class="prize-bar-track">
-                        <div class="prize-bar-fill" id="prize-bar-fill" style="width:0%"></div>
-                    </div>
-                    <div class="prize-bar-labels">
-                        <span id="prize-pool-label">$0 pooled</span>
-                        <span class="at-max">$100 jackpot</span>
-                    </div>
-                </div>
-                <div class="prize-contributors" id="prize-contributors">
-                    <!-- Chips rendered by JS -->
+                <span class="prize-value-badge" id="prize-value-badge" style="display:none"></span>
+                <p class="prize-item-desc" id="prize-item-desc"></p>
+                <div class="prize-donor-block" id="prize-donor-block" style="display:none">
+                    <span class="prize-donor-label">Donated by</span>
+                    <strong class="prize-donor-name" id="prize-donor-name"></strong>
+                    <p class="prize-donor-story" id="prize-donor-story"></p>
                 </div>
                 <div id="prize-winner-wrap" style="display:none">
                     <div class="prize-winner-banner">
@@ -518,6 +525,12 @@
                 <p class="prize-note" id="prize-note">
                     Complete all 5 stamps tonight to receive your entry code. Present it at the <strong>Arts Council of Kern</strong> front desk by 9 PM to enter the prize draw.
                 </p>
+            </div>
+
+            <!-- Our Supporters -->
+            <p class="supporters-heading">Our Supporters</p>
+            <div class="prize-contributors" id="prize-contributors">
+                <!-- Chips rendered by JS -->
             </div>
         </div>
     </section>
@@ -657,7 +670,7 @@ function render() {
         return;
     }
     renderStatsBar();
-    renderPrizePool();
+    renderPrizeOfMonth();
     renderCurrentEvent();
     renderPastEvents();
     renderNextEvent();
@@ -674,47 +687,56 @@ function renderStatsBar() {
     const events    = DATA.events || [];
     const completed = events.filter(e => e.status === 'completed');
     const totalComp = completed.reduce((s, e) => s + (e.totalCompletions || 0), 0);
-    const totalPrize = completed.reduce((s, e) => s + (e.prizePool || 0), 0);
+    const prizeEvents = completed.filter(e => e.prizeWinner).length;
 
     document.getElementById('stat-events').textContent       = events.length;
     document.getElementById('stat-completions').textContent  = totalComp || '0';
     document.getElementById('stat-venues').textContent       = '5';
-    document.getElementById('stat-prize').textContent        = totalPrize ? '$' + totalPrize : '$0';
+    document.getElementById('stat-prize').textContent        = prizeEvents || '0';
 }
 
-function renderPrizePool() {
-    const pool = DATA.prizePool;
-    if (!pool) return;
+function renderPrizeOfMonth() {
+    const prize = DATA.prizeOfMonth;
+    if (!prize) return;
 
-    const pct     = Math.min(100, Math.round((pool.current / pool.max) * 100));
-    const isFull  = pool.current >= pool.max;
-    const isWon   = !!pool.winner;
+    const isWon = !!prize.winner;
 
-    document.getElementById('prize-event-label').textContent  = pool.eventName || '';
-    document.getElementById('prize-amount').textContent       = '$' + pool.current;
-    document.getElementById('prize-max-label').textContent    = '/ $' + pool.max + ' max';
-    document.getElementById('prize-pool-label').textContent   = '$' + pool.current + ' pooled · ' + (pool.contributors || []).length + ' venues';
-    document.getElementById('prize-badge').textContent        = isWon ? '🏆 Winner Drawn' : isFull ? '💰 Pool Full!' : 'Active';
+    document.getElementById('prize-event-label').textContent = prize.eventName || '';
+    document.getElementById('prize-badge').textContent       = isWon ? '🏆 Winner Drawn' : 'Active';
 
-    const fill = document.getElementById('prize-bar-fill');
-    setTimeout(() => {
-        fill.style.width = pct + '%';
-        if (isFull) fill.classList.add('full');
-    }, 300);
+    // Item name
+    if (prize.item) document.getElementById('prize-item-name').textContent = prize.item;
 
-    // Contributors
-    const chips = document.getElementById('prize-contributors');
-    chips.innerHTML = (pool.contributors || []).map(c =>
-        `<div class="contributor-chip">${c.name} <span class="chip-amount">$${c.amount}</span></div>`
-    ).join('');
+    // Value badge
+    if (prize.estimatedValue) {
+        const badge = document.getElementById('prize-value-badge');
+        badge.textContent = prize.estimatedValue;
+        badge.style.display = 'inline-block';
+    }
+
+    // Description
+    if (prize.description) document.getElementById('prize-item-desc').textContent = prize.description;
+
+    // Donor block
+    if (prize.donor) {
+        document.getElementById('prize-donor-name').textContent  = prize.donor;
+        document.getElementById('prize-donor-story').textContent = prize.donorStory || '';
+        document.getElementById('prize-donor-block').style.display = 'block';
+    }
 
     // Winner
     if (isWon) {
-        document.getElementById('prize-winner-name').textContent = pool.winner;
+        document.getElementById('prize-winner-name').textContent = prize.winner;
         document.getElementById('prize-winner-wrap').style.display = 'block';
         document.getElementById('prize-note').textContent =
             'Congratulations to tonight\'s winner! See you next month at ' + (DATA.nextEvent?.name || 'the next First Friday') + '.';
     }
+
+    // Supporters (contributors at top level)
+    const chips = document.getElementById('prize-contributors');
+    chips.innerHTML = (DATA.contributors || []).map(c =>
+        `<div class="contributor-chip">${c.name} <span class="chip-amount">$${c.amount}</span></div>`
+    ).join('');
 }
 
 function renderCurrentEvent() {
@@ -781,7 +803,7 @@ function renderPastEvents() {
                 </div>
                 <div class="past-event-badges">
                     <span class="badge badge--completed">Completed</span>
-                    ${e.prizePool ? `<span class="badge badge--gold">$${e.prizePool} Prize Pool</span>` : ''}
+                    ${e.prizeItem ? `<span class="badge badge--gold">🏆 ${e.prizeItem}</span>` : (e.prizePool ? `<span class="badge badge--gold">$${e.prizePool} Pool</span>` : '')}
                 </div>
             </div>
             <div class="past-event-stats">

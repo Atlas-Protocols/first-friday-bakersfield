@@ -1,6 +1,6 @@
 {
   "_note": "Update this file after each event via Admin → Export events.json, then commit to repo.",
-  "updatedAt": "2026-03-09T00:00:00Z",
+  "updatedAt": "2026-03-10T00:00:00Z",
   "organizer": "Atlas Protocols · Board-Bored",
   "contact": "boardbored@atlasprotocols.com",
 
@@ -11,21 +11,30 @@
     "status": "upcoming"
   },
 
-  "prizePool": {
+  "prizeOfMonth": {
     "eventName": "March 2026 First Friday",
     "eventDate": "March 7, 2026",
-    "current": 85,
-    "max": 100,
-    "currency": "USD",
-    "winner": null,
+    "item": "Prize of the Month",
+    "description": "A special item donated by one of our participating venues — something with a story, handpicked for the First Friday community.",
+    "donor": "Participating Venue",
+    "donorStory": "Each month a local business donates something meaningful to give back to the community that shows up.",
+    "estimatedValue": "",
     "announcementTime": "9:00 PM at ACK front desk",
-    "contributors": [
-      { "name": "Bakersfield Vintage",          "amount": 20 },
-      { "name": "Dagny's Coffee",               "amount": 20 },
-      { "name": "Bakersfield Art Association",  "amount": 15 },
-      { "name": "Encore Boutique",              "amount": 15 },
-      { "name": "Arts Council of Kern",         "amount": 15 }
-    ]
+    "winner": null
+  },
+
+  "contributors": [
+    { "name": "Bakersfield Vintage",          "amount": 20 },
+    { "name": "Dagny's Coffee",               "amount": 20 },
+    { "name": "Bakersfield Art Association",  "amount": 15 },
+    { "name": "Encore Boutique",             "amount": 15 },
+    { "name": "Arts Council of Kern",        "amount": 15 }
+  ],
+
+  "memoryQuest": {
+    "albumUrl": "https://photos.app.goo.gl/REPLACE_WITH_ALBUM_LINK",
+    "hashtag": "BoardBoredFF",
+    "eventHashtag": "BBFF0307"
   },
 
   "events": [
@@ -36,13 +45,14 @@
       "isoDate": "2026-03-07",
       "status": "active",
       "totalCompletions": 0,
+      "prizeItem": "Prize of the Month",
       "prizePool": 85,
       "prizeWinner": null,
       "venueStats": [
         { "venueId": 1, "name": "Bakersfield Vintage",         "emoji": "📻", "scans": 0 },
         { "venueId": 2, "name": "Dagny's Coffee",              "emoji": "☕", "scans": 0 },
         { "venueId": 3, "name": "Bakersfield Art Association", "emoji": "🎨", "scans": 0 },
-        { "venueId": 4, "name": "Encore Boutique",             "emoji": "👗", "scans": 0 },
+        { "venueId": 4, "name": "Encore Boutique",            "emoji": "👗", "scans": 0 },
         { "venueId": 5, "name": "Arts Council of Kern",        "emoji": "🏛️", "scans": 0 }
       ]
     }

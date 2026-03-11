@@ -468,7 +468,7 @@
         <div class="container">
             <p class="hero-eyebrow">Board-Bored · Vendor &amp; Sponsor Hub</p>
             <h1>Real Foot Traffic.<br><span class="gradient-text">Real Results.</span></h1>
-            <p>Every First Friday, the Board-Bored arts trail drives verified visitors to your venue — and gives one lucky participant up to <strong style="color:var(--c-gold)">$100 cash</strong>.</p>
+            <p>Every First Friday, the Board-Bored arts trail drives verified visitors to your venue — and gives one lucky participant the <strong style="color:var(--c-gold)">Prize of the Month</strong>, donated by the community itself.</p>
             <div class="hero-actions">
                 <a href="#join" class="btn btn--primary">🤝 Join Next Event</a>
                 <a href="#stats" class="btn btn--outline">📊 View Stats</a>
@@ -576,8 +576,8 @@
             <div class="steps-grid">
                 <div class="step-card">
                     <div class="step-num">1</div>
-                    <h3>Pledge &amp; Join</h3>
-                    <p>Pledge $10–$25 to the prize pool. You're listed as a sponsor. The bigger the pool, the more users complete the trail.</p>
+                    <h3>Support &amp; Join</h3>
+                    <p>Contribute to the trail as a supporter or donate a Prize of the Month. You're listed in the vendor hub and in the app for the night.</p>
                 </div>
                 <div class="step-card">
                     <div class="step-num">2</div>
@@ -597,7 +597,7 @@
                 <div class="step-card">
                     <div class="step-num">5</div>
                     <h3>Winner Drawn at 9 PM</h3>
-                    <p>Attendees who complete all 5 stamps get an entry code. One winner receives the full prize pool — announced live at ACK.</p>
+                    <p>Attendees who complete all 5 stamps get an entry code. One winner receives the Prize of the Month — a donated item with a story, announced live at ACK.</p>
                 </div>
                 <div class="step-card">
                     <div class="step-num">6</div>
@@ -614,20 +614,19 @@
             <div class="join-card">
                 <p class="hero-eyebrow" style="margin-bottom:0.75rem">🤝 Join the Trail</p>
                 <h2>Participate in <span class="gradient-text">Next Month</span></h2>
-                <p>Choose your pledge amount and we'll get you set up. Every venue gets the live QR display, verified scan data, and a listing in the app.</p>
+                <p>Get a live QR display, verified scan data, and a listing in the app. Want to donate the Prize of the Month? We'd love to tell your story.</p>
                 <div class="pledge-options">
-                    <div class="pledge-chip" onclick="selectPledge(this,'$10')">$10</div>
-                    <div class="pledge-chip selected" onclick="selectPledge(this,'$15')">$15 <span style="font-size:0.65rem;opacity:.7">Popular</span></div>
-                    <div class="pledge-chip" onclick="selectPledge(this,'$20')">$20</div>
-                    <div class="pledge-chip" onclick="selectPledge(this,'$25')">$25</div>
+                    <div class="pledge-chip" onclick="selectPledge(this,'supporter')">💛 Supporter</div>
+                    <div class="pledge-chip selected" onclick="selectPledge(this,'prize donor')">🏆 Prize Donor <span style="font-size:0.65rem;opacity:.7">Special</span></div>
+                    <div class="pledge-chip" onclick="selectPledge(this,'venue host')">📍 Venue Host</div>
                 </div>
                 <a id="join-mailto" href="#" class="btn btn--primary" style="margin-bottom:0.75rem">
-                    📧 Request Participation Info
+                    📧 Get Involved
                 </a>
                 <br>
                 <p class="join-note">
-                    Pool cap is <strong>$100</strong> — once it's full, no new venues can join for that event (fair for everyone).<br>
-                    Next event: <strong id="next-event-date">—</strong> · Spots fill fast in the spring season.
+                    Participation is collaborative — we'll work with you on what fits your business.<br>
+                    Next event: <strong id="next-event-date">—</strong> · Reach out early to secure your spot.
                 </p>
             </div>
         </div>
@@ -832,7 +831,7 @@ function renderNextEvent() {
     const contact = DATA.contact || {};
     const email = contact.email || 'firstfriday@atlasprotocols.com';
     document.getElementById('join-mailto').href =
-        `mailto:${email}?subject=Vendor Participation - ${next.name || 'Next First Friday'}&body=Hi! I'd like to participate in ${next.name || 'the next First Friday'} as a venue/sponsor.%0A%0ABusiness name: %0AAddress: %0AContact name: %0APledge amount: ${selectedPledge}%0A%0AThanks!`;
+        `mailto:${email}?subject=First Friday Participation - ${next.name || 'Next First Friday'}&body=Hi! I'd like to get involved in ${next.name || 'the next First Friday'}.%0A%0ABusiness name: %0AAddress: %0AContact name: %0AInterest: ${selectedPledge}%0A%0ATell me more about what participation looks like!%0A%0AThanks!`;
 }
 
 // ─── Pledge selector ────────────────────────────────────────────────────
